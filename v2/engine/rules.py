@@ -64,7 +64,7 @@ def _find_visible(s: GameState, room: Room, name: str | None) -> GameObject | No
 
 def _not_found(name: str | None) -> Outcome:
     what = f"'{name}'" if name else "that"
-    return Outcome(success=False, event="not_found", message=f"There is nothing like {what} here.")
+    return Outcome(success=False, event="not_found", message=f"You don't see anything like {what} here right now.")
 
 
 def _reveal_facts(s: GameState, room: Room, fact_ids: list[str]) -> list[str]:
