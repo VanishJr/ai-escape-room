@@ -1,0 +1,21 @@
+# Course materials (assignment spec and instructions) — not part of the repo
+instructions/
+
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Local logs and raw eval output
+logs/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
