@@ -11,15 +11,22 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-DEFAULT_MODEL = "gemini-3.6-flash"
-DEFAULT_PARSER_MODEL = "gemini-3.5-flash-lite"
+DEFAULT_MODELS = ("gemini-3.6-flash",)
+DEFAULT_PARSER_MODELS = ("gemini-3.5-flash-lite",)
 
 
 @dataclass(frozen=True)
 class Settings:
     api_key: str | None
-    model: str  # writes the story: V1 game master, V2 narrator
-    parser_model: str  # turns player text into a structured action (V2)
+    # Each setting is a fallback chain: the free tier has a small daily quota per
+    # model, so when one model's quota runs out the client moves to the next one.
+    models: tuple[str, ...]  # write the story: V1 game master, V2 narrator
+    parser_models: tuple[str, ...]  # turn player text into a structured action (V2)
+
+
+def _model_list(var: str, default: tuple[str, ...]) -> tuple[str, ...]:
+    models = tuple(m.strip() for m in (os.getenv(var) or "").split(",") if m.strip())
+    return models or default
 
 
 @lru_cache(maxsize=1)
@@ -27,6 +34,6 @@ def get_settings() -> Settings:
     load_dotenv(PROJECT_ROOT / ".env")
     return Settings(
         api_key=os.getenv("GEMINI_API_KEY") or None,
-        model=os.getenv("GEMINI_MODEL") or DEFAULT_MODEL,
-        parser_model=os.getenv("GEMINI_PARSER_MODEL") or DEFAULT_PARSER_MODEL,
+        models=_model_list("GEMINI_MODEL", DEFAULT_MODELS),
+        parser_models=_model_list("GEMINI_PARSER_MODEL", DEFAULT_PARSER_MODELS),
     )

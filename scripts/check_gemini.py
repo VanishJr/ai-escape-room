@@ -37,7 +37,7 @@ def main() -> int:
     for name in sorted(n for n in available if n.startswith("gemini")):
         print("  ", name)
 
-    missing = [m for m in (settings.model, settings.parser_model) if m not in available]
+    missing = [m for m in (*settings.models, *settings.parser_models) if m not in available]
     if missing:
         print(f"\nConfigured model(s) not available: {missing}. Update GEMINI_MODEL / GEMINI_PARSER_MODEL in .env.")
         return 1
@@ -45,9 +45,9 @@ def main() -> int:
     client = GeminiClient(settings)
     try:
         text = client.generate_text("Answer in one short sentence.", [ChatTurn("user", "Say hello to a player.")])
-        print(f"\n[{settings.model}] text call OK: {text}")
+        print(f"\n[{client.last_model}] text call OK: {text}")
         ping = client.generate_json("Return ok=true and any one word.", "ping", Ping)
-        print(f"[{settings.parser_model}] JSON call OK: {ping.model_dump()}")
+        print(f"[{client.last_model}] JSON call OK: {ping.model_dump()}")
     except LLMError as exc:
         print(f"\nAPI call failed: {exc}")
         return 1
