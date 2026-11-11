@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 from common.llm_client import LLMClient, LLMError
 from common.room import Room, default_room
-from v2.engine.actions import Action
+from v2.engine.actions import Action, Intent
 from v2.engine.rules import Outcome, resolve
 from v2.engine.state import GameState, new_game
 from v2.llm.narrator import NarrationTurn, build_turn_prompt, fallback_reply, narrate
@@ -65,8 +65,11 @@ class V2Game:
 
         new_state, outcome = resolve(state, action, self.room)
         turn_prompt = build_turn_prompt(player_text, action, outcome, new_state, self.room)
-        codes = protected_codes(self.room, new_state, player_text)
-        recent = history[-self.HISTORY_TURNS :]
+        entered = action.code if action.intent in (Intent.ENTER_CODE, Intent.OPEN) else None
+        codes = protected_codes(self.room, new_state, entered)
+        # Out-of-game requests ("is the code 1847?", claims, injections) are narrated
+        # without history: the narrator then has no clues it could confirm or combine.
+        recent = [] if action.intent in (Intent.META, Intent.UNKNOWN) else history[-self.HISTORY_TURNS :]
 
         guard_triggered = used_fallback = False
         try:

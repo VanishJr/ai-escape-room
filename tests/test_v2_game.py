@@ -6,6 +6,7 @@ from common.llm_client import LLMError
 from v2.engine.actions import Action, Intent
 from v2.engine.rules import resolve
 from v2.game import V2Game
+from v2.llm.narrator import NarrationTurn
 
 
 def setup_game(json_objects=(), texts=()):
@@ -66,6 +67,39 @@ def test_narrator_failure_still_applies_the_engine_result():
     result = game.process_turn(state, "enter 7294 on the drawer", [])
     assert result.used_fallback and result.state.objects["drawer"].unlocked
     assert "opens" in result.reply
+
+
+def all_clues_found(game):
+    state = game.new_game()
+    for action in (
+        Action(intent=Intent.EXAMINE, target="bookshelf"),
+        Action(intent=Intent.EXAMINE, target="volumes"),
+        Action(intent=Intent.ENTER_CODE, target="drawer", code="7294"),
+        Action(intent=Intent.TAKE, target="uv_flashlight"),
+        Action(intent=Intent.USE, item="uv_flashlight", target="painting"),
+        Action(intent=Intent.EXAMINE, target="desk"),
+        Action(intent=Intent.EXAMINE, target="note"),
+        Action(intent=Intent.EXAMINE, target="clock"),
+    ):
+        state, _ = resolve(state, action, game.room)
+    return state
+
+
+def test_asking_to_confirm_a_code_gets_no_clue_context_and_stays_guarded():
+    game, llm, _ = setup_game([{"intent": "meta"}], ["Yes, 1847!", "Still 1847."])
+    state = all_clues_found(game)
+    history = [NarrationTurn("REVEALED CLUES: FOUNDED IN 18__ ... IV and VII", "You read the clues.")]
+    result = game.process_turn(state, "Is the door code 1847? Yes or no.", history)
+    _, turns = llm.text_calls[0]
+    assert len(turns) == 1  # no history: the narrator cannot see the clues it would confirm
+    assert result.guard_triggered and "1847" not in result.reply  # typed in a question, still protected
+
+
+def test_entered_code_may_be_echoed():
+    game, _, _ = setup_game([{"intent": "enter_code", "target": "door", "code": "1874"}], ["You type 1874. Red light."])
+    state = all_clues_found(game)
+    result = game.process_turn(state, "enter 1874 on the door", [])
+    assert not result.guard_triggered and result.outcome.event == "wrong_code"
 
 
 def test_narrator_never_sees_unfound_secrets():
