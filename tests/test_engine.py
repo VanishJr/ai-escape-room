@@ -64,6 +64,27 @@ def test_hints_follow_progress(room):
     assert "special light" in hint.message
 
 
+def test_descriptions_follow_the_state(room):
+    state, _ = play(room, WALKTHROUGH[:7])  # portrait message uncovered, note read
+    _, (_, desk, painting) = play(
+        room,
+        [
+            Action(intent=Intent.TAKE, target="note"),
+            Action(intent=Intent.EXAMINE, target="desk"),
+            Action(intent=Intent.EXAMINE, target="painting"),
+        ],
+        state,
+    )
+    assert "note lies" not in desk.message  # the note is in the inventory now
+    assert any("FOUNDED IN 18__" in f for f in painting.facts)  # re-examining shows the uncovered message
+
+
+def test_painting_hint_names_the_action_that_works(room):
+    state, _ = play(room, WALKTHROUGH[:4])
+    _, (hint,) = play(room, [Action(intent=Intent.HINT)], state)
+    assert "shine it on the portrait" in hint.message
+
+
 def test_resolve_never_mutates_the_input_state(room):
     state = new_game(room)
     before = state.model_dump()

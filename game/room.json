@@ -12,14 +12,15 @@
     {
       "id": "desk",
       "name": "oak desk",
-      "aliases": ["desk", "writing desk", "table"],
+      "aliases": ["desk", "writing desk", "table", "paperweight"],
       "description": "A heavy oak desk covered in dust. A folded note lies under a brass paperweight. The desk has a single drawer with a 4-digit combination lock.",
+      "cleared_description": "A heavy oak desk covered in dust, with a brass paperweight and a single drawer with a 4-digit combination lock.",
       "examine_reveals": ["note"]
     },
     {
       "id": "drawer",
       "name": "desk drawer",
-      "aliases": ["drawer", "locked drawer", "combination lock", "padlock"],
+      "aliases": ["drawer", "locked drawer", "desk drawer lock", "drawer lock", "desk lock", "brass lock", "combination lock", "padlock", "dials"],
       "description": "The desk's only drawer is held shut by a brass combination lock with four dials.",
       "open_description": "The drawer stands open; the brass lock hangs loose.",
       "lock": {
@@ -42,7 +43,7 @@
     {
       "id": "volumes",
       "name": "four leather volumes",
-      "aliases": ["volumes", "four volumes", "four books", "leather books", "marked books", "history of locks"],
+      "aliases": ["volumes", "volume", "four volumes", "leather volumes", "four books", "leather books", "marked books", "book", "tomes", "history of locks", "volume i", "volume ii", "volume iii", "volume iv", "vol i", "vol ii", "vol iii", "vol iv"],
       "description": "Four leather-bound volumes titled 'A History of Locks', numbered I to IV.",
       "hidden": true,
       "examine_facts": ["volume_digits"]
@@ -59,7 +60,7 @@
     {
       "id": "clock",
       "name": "grandfather clock",
-      "aliases": ["clock", "old clock", "pendulum clock", "clock hands"],
+      "aliases": ["clock", "old clock", "pendulum clock", "clock hands", "clock face", "hands"],
       "description": "A tall grandfather clock with Roman numerals. Its pendulum is still.",
       "examine_facts": ["clock_hands"]
     },
@@ -72,7 +73,7 @@
     {
       "id": "note",
       "name": "folded note",
-      "aliases": ["note", "paper", "letter", "message", "folded paper"],
+      "aliases": ["note", "paper", "letter", "folded paper", "yellowed note"],
       "description": "A yellowed note written in elegant handwriting.",
       "hidden": true,
       "takeable": true,
@@ -89,7 +90,7 @@
     {
       "id": "door",
       "name": "iron door",
-      "aliases": ["door", "exit", "keypad", "iron door", "metal door"],
+      "aliases": ["door", "exit", "keypad", "iron door", "metal door", "door lock", "door keypad", "numeric keypad"],
       "description": "A heavy iron door with a numeric keypad that takes four digits. Engraved above it: 'Knowledge is the only key.'",
       "is_exit": true,
       "lock": {
@@ -137,7 +138,7 @@
   "hints": [
     {"puzzle": "volumes", "requires_facts": ["volume_digits"], "text": "The volumes are numbered I to IV. Read their digits from the first volume to the last, not in shelf order, and try that on the drawer."},
     {"puzzle": "volumes", "text": "The bookshelf deserves a closer look, and so does anything on it that looks out of place."},
-    {"puzzle": "painting", "requires_solved": ["volumes"], "text": "Some inks only show under special light. Make sure you carry what was in the drawer, then look at the portrait again."},
+    {"puzzle": "painting", "requires_solved": ["volumes"], "text": "Some inks only show under special light. Take what was in the drawer and shine it on the portrait."},
     {"puzzle": "clock", "requires_facts": ["note_text"], "text": "The note talks about the old clock. Where exactly did its hands stop? Roman numerals are numbers too."},
     {"puzzle": "clock", "text": "There is something on the desk worth reading."},
     {"puzzle": "exit", "requires_solved": ["painting", "clock"], "text": "Combine what the portrait and the clock told you into a four-digit year and try it on the door."}

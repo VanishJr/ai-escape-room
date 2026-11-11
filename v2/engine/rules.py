@@ -124,7 +124,8 @@ def _examine(s: GameState, action: Action, room: Room) -> Outcome:
     if obj is None:
         return _not_found()
     s.objects[obj.id].examined = True
-    parts = [obj.description]
+    cleared = obj.examine_reveals and all(s.carries(o) for o in obj.examine_reveals)
+    parts = [obj.cleared_description if cleared and obj.cleared_description else obj.description]
     if status := _lock_status(s, obj):
         parts.append(status)
     if obj.lock and s.objects[obj.id].unlocked:
@@ -133,11 +134,13 @@ def _examine(s: GameState, action: Action, room: Room) -> Outcome:
             parts.append(f"Inside: {', '.join(inside)}.")
     if revealed := _reveal_objects(s, room, obj.examine_reveals):
         parts.append(f"You notice: {', '.join(revealed)}.")
+    # Re-examining shows what the player already uncovered here (e.g. the UV message).
+    uncovered = [f for use in obj.uses for f in use.facts if f in s.known_facts]
     return Outcome(
         success=True,
         event="examined",
         message=" ".join(parts),
-        facts=_reveal_facts(s, room, obj.examine_facts),
+        facts=_reveal_facts(s, room, obj.examine_facts) + [room.fact(f).text for f in uncovered],
     )
 
 

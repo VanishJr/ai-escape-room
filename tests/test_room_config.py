@@ -26,6 +26,27 @@ def test_find_object_matches_names_and_aliases(room: Room):
     assert room.find_object(None) is None
 
 
+@pytest.mark.parametrize(
+    "words, expected",
+    [
+        ("the drawer lock", "drawer"),
+        ("Volume III", "volumes"),
+        ("Vol. I", "volumes"),
+        ("the clock's hands", "clock"),
+        ("my flashlight", "uv_flashlight"),
+        ("UV-flashlight", "uv_flashlight"),
+        ("the door keypad", "door"),
+    ],
+)
+def test_natural_wordings_resolve(room: Room, words, expected):
+    assert room.find_object(words).id == expected
+
+
+def test_message_is_not_an_alias_of_the_note(room: Room):
+    """'the message' usually means the glowing text on the portrait, not the note."""
+    assert room.find_object("message") is None
+
+
 def test_aliases_are_unambiguous(room: Room):
     seen: dict[str, str] = {}
     for obj in room.objects:

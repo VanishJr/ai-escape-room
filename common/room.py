@@ -46,7 +46,8 @@ class GameObject(BaseModel):
     name: str
     aliases: list[str] = []
     description: str
-    open_description: str | None = None
+    open_description: str | None = None  # for locks, once opened
+    cleared_description: str | None = None  # once everything it reveals has been taken
     hidden: bool = False  # invisible until revealed by another action
     takeable: bool = False
     is_exit: bool = False
@@ -165,8 +166,9 @@ class Room(BaseModel):
 
 
 def _normalize(text: str) -> str:
-    text = re.sub(r"[^a-z0-9 ]", " ", text.lower())
-    text = re.sub(r"^(the|a|an) ", "", " ".join(text.split()))
+    text = re.sub(r"['’]s\b", "", text.lower())  # "the clock's hands" -> "the clock hands"
+    text = re.sub(r"[^a-z0-9 ]", " ", text)
+    text = re.sub(r"^(the|a|an|my|your|this|that|these|those) ", "", " ".join(text.split()))
     return text
 
 
