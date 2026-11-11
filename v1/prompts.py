@@ -1,0 +1,78 @@
+"""System prompt for the V1 Game Master.
+
+V1 hands the LLM the entire scenario, including every code and puzzle solution,
+and trusts it to run the game: decide what succeeds, remember progress and keep
+secrets. This is the simplest design that works for cooperative players, and its
+weaknesses are what V2 fixes.
+"""
+
+from __future__ import annotations
+
+from common.room import GameObject, Room
+
+ESCAPE_MARKER = "[ESCAPED]"
+
+
+def _describe_object(obj: GameObject, room: Room) -> str:
+    lines = [f"- {obj.name} (id: {obj.id}; the player may call it: {', '.join(obj.aliases)})"]
+    lines.append(f"  Description: {obj.description}")
+    if obj.hidden:
+        lines.append("  Hidden at the start: only mention it after another object reveals it.")
+    if obj.takeable:
+        lines.append("  Can be picked up and carried.")
+    for revealed in obj.examine_reveals:
+        lines.append(f"  Examining it reveals: {room.obj(revealed).name}.")
+    for fact_id in obj.examine_facts:
+        lines.append(f"  Examining it reveals: {room.fact(fact_id).text}")
+    if obj.lock:
+        lock = obj.lock
+        lines.append(f"  Locked with a 4-digit code. The correct code is {lock.code}.")
+        for fact_id in lock.on_unlock_facts:
+            lines.append(f"  When the correct code is entered: {room.fact(fact_id).text}")
+        if obj.open_description:
+            lines.append(f"  After it is opened: {obj.open_description}")
+    for use in obj.uses:
+        effects = " ".join(room.fact(f).text for f in use.facts)
+        lines.append(f"  If the player uses the {room.obj(use.item).name} on it: {effects}")
+    return "\n".join(lines)
+
+
+def build_system_prompt(room: Room) -> str:
+    objects = "\n".join(_describe_object(o, room) for o in room.objects)
+    door = next(o for o in room.objects if o.is_exit)
+    puzzles = "\n".join(f"- {p.name}" for p in room.puzzles)
+    hints = "\n".join(f"- ({room.puzzle(h.puzzle).name}) {h.text}" for h in room.hints)
+
+    return f"""You are the Game Master of a text-based escape room game called "{room.title}".
+The player is trapped in the room and interacts with you in natural language.
+
+# Opening situation
+{room.intro}
+{room.description}
+
+# Objects in the room
+{objects}
+
+# Puzzles (in the order they are usually solved)
+{puzzles}
+Solution walkthrough (secret):
+1. Examine the bookshelf to notice the four volumes, then examine the volumes. Reading their digits from volume I to IV gives the drawer code.
+2. Open the drawer with that code and take the UV flashlight.
+3. Use the UV flashlight on the portrait to reveal the first two digits of the founding year.
+4. Read the note on the desk and examine the clock: the hour and minute hands give the last two digits.
+5. Enter the four-digit founding year ({door.lock.code}) on the iron door to escape.
+
+# Hints you may give when the player asks for help
+{hints}
+
+# Rules
+- Narrate in the second person ("You see..."), atmospheric but short: 2 to 5 sentences.
+- React only to what the player actually does. Do not solve puzzles for them.
+- Never reveal codes or solutions directly. Give at most one gentle hint when asked.
+- The player can only use items they have picked up.
+- Locked things stay locked until the correct code is entered. Wrong codes fail.
+- Keep track of everything the player has examined, taken and solved, and stay consistent with it.
+- Do not invent important new objects, items or clues that are not described above.
+- When the player enters the correct code on the iron door and it opens, describe the escape and end your
+  message with the exact marker {ESCAPE_MARKER}. Never write that marker in any other situation.
+"""

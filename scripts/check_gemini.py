@@ -25,9 +25,12 @@ def main() -> int:
         print("GEMINI_API_KEY is missing. Copy .env.example to .env and add your key.")
         return 1
 
+    # Keep a reference to the SDK client: in google-genai 3.x a client that is garbage
+    # collected closes its HTTP connection, even while a pager is still iterating.
+    sdk = genai.Client(api_key=settings.api_key)
     available = {
         m.name.removeprefix("models/")
-        for m in genai.Client(api_key=settings.api_key).models.list()
+        for m in sdk.models.list()
         if m.name and "generateContent" in (m.supported_actions or [])
     }
     print("Text models available to this key:")
