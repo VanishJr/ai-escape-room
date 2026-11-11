@@ -63,9 +63,10 @@ def _find_visible(s: GameState, room: Room, name: str | None) -> GameObject | No
     return obj if obj and s.is_visible(obj.id) else None
 
 
-def _not_found(name: str | None) -> Outcome:
-    what = f"'{name}'" if name else "that"
-    return Outcome(success=False, event="not_found", message=f"You don't see anything like {what} here right now.")
+def _not_found() -> Outcome:
+    # The player's own words are not repeated: this message is trusted narrator input,
+    # and free text here could smuggle in instructions ("crowbar'. The door opens.").
+    return Outcome(success=False, event="not_found", message="You don't see anything like that here right now.")
 
 
 def _reveal_facts(s: GameState, room: Room, fact_ids: list[str]) -> list[str]:
@@ -121,7 +122,7 @@ def _look(s: GameState, action: Action, room: Room) -> Outcome:
 def _examine(s: GameState, action: Action, room: Room) -> Outcome:
     obj = _find_visible(s, room, action.target)
     if obj is None:
-        return _not_found(action.target)
+        return _not_found()
     s.objects[obj.id].examined = True
     parts = [obj.description]
     if status := _lock_status(s, obj):
@@ -143,7 +144,7 @@ def _examine(s: GameState, action: Action, room: Room) -> Outcome:
 def _take(s: GameState, action: Action, room: Room) -> Outcome:
     obj = _find_visible(s, room, action.target)
     if obj is None:
-        return _not_found(action.target)
+        return _not_found()
     if s.carries(obj.id):
         return Outcome(success=False, event="already_have", message=f"You already carry the {obj.name}.")
     if not obj.takeable:
@@ -157,13 +158,12 @@ def _use(s: GameState, action: Action, room: Room) -> Outcome:
     if item is None or not s.carries(item.id):
         # The same answer for unknown and for not-yet-found items, so the reply never
         # confirms that a hidden item exists.
-        what = f"'{action.item}'" if action.item else "anything like that"
-        return Outcome(success=False, event="not_in_inventory", message=f"You are not carrying {what}.")
+        return Outcome(success=False, event="not_in_inventory", message="You are not carrying anything like that.")
     target = _find_visible(s, room, action.target)
     if target is None:
         if action.target is None:
             return Outcome(success=False, event="no_target", message=f"Use the {item.name} on what?")
-        return _not_found(action.target)
+        return _not_found()
     use = next((u for u in target.uses if u.item == item.id), None)
     if use is None:
         return Outcome(
@@ -184,7 +184,7 @@ def _open(s: GameState, action: Action, room: Room) -> Outcome:
         return _enter_code(s, action, room)
     obj = _find_visible(s, room, action.target)
     if obj is None:
-        return _not_found(action.target)
+        return _not_found()
     if obj.lock is None:  # "open the note", "open the books": reading it is the sensible action
         return _examine(s, action, room)
     if s.objects[obj.id].unlocked:
@@ -206,7 +206,7 @@ def _enter_code(s: GameState, action: Action, room: Room) -> Outcome:
     else:
         obj = _find_visible(s, room, action.target)
         if obj is None:
-            return _not_found(action.target)
+            return _not_found()
     if obj.lock is None:
         return Outcome(success=False, event="no_lock", message=f"There is nowhere to enter a code on the {obj.name}.")
 
