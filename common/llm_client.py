@@ -39,6 +39,10 @@ class LLMError(RuntimeError):
     """The LLM could not produce a usable answer (missing key, quota, outage, bad output)."""
 
 
+class QuotaExhausted(LLMError):
+    """Every configured model has used up its daily free-tier quota."""
+
+
 class LLMClient(Protocol):
     def generate_text(self, system: str, turns: list[ChatTurn]) -> str: ...
 
@@ -124,7 +128,7 @@ class GeminiClient:
             self.last_model = model
             return response
         if reasons == {"quota"}:
-            raise LLMError(
+            raise QuotaExhausted(
                 f"The daily free-tier quota is used up for: {', '.join(models)}. "
                 "It resets at midnight Pacific time; you can also add another model to GEMINI_MODEL in .env."
             )
