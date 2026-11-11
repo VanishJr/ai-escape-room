@@ -25,6 +25,7 @@
       "lock": {
         "code": "7294",
         "puzzle": "volumes",
+        "requires_facts": ["volume_digits"],
         "on_unlock_facts": ["drawer_opened"],
         "reveals": ["uv_flashlight"],
         "max_attempts": 3,
@@ -94,6 +95,7 @@
       "lock": {
         "code": "1847",
         "puzzle": "exit",
+        "requires_solved": ["painting", "clock"],
         "on_unlock_facts": ["door_opened"],
         "max_attempts": 3,
         "lockout_turns": 3

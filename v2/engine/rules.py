@@ -12,11 +12,12 @@ double as a plain-text reply when the LLM is unavailable.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 
 from pydantic import BaseModel
 
-from common.room import GameObject, Room
+from common.room import GameObject, Lock, Room
 from v2.engine.actions import Action, Intent
 from v2.engine.state import GameState, LogEntry
 
@@ -91,6 +92,12 @@ def _solve_fact_puzzles(s: GameState, room: Room) -> None:
     for puzzle in room.puzzles:
         if puzzle.solved_when_facts and all(f in s.known_facts for f in puzzle.solved_when_facts):
             _solve(s, puzzle.id)
+
+
+def _clues_found(s: GameState, lock: Lock) -> bool:
+    return all(f in s.known_facts for f in lock.requires_facts) and all(
+        p in s.solved for p in lock.requires_solved
+    )
 
 
 def _lock_status(s: GameState, obj: GameObject) -> str:
@@ -187,7 +194,7 @@ def _open(s: GameState, action: Action, room: Room) -> Outcome:
 
 def _enter_code(s: GameState, action: Action, room: Room) -> Outcome:
     code = (action.code or "").strip()
-    if not (len(code) == 4 and code.isdigit()):
+    if not re.fullmatch(r"[0-9]{4}", code):
         return Outcome(success=False, event="invalid_code", message="The locks here take a 4-digit code.")
 
     if action.target is None:  # "1847" on its own: fine if only one lock is still closed
@@ -206,6 +213,15 @@ def _enter_code(s: GameState, action: Action, room: Room) -> Outcome:
     lock, obj_state = obj.lock, s.objects[obj.id]
     if obj_state.unlocked:
         return Outcome(success=True, event="already_open", message=f"The {obj.name} is already open.")
+    if not _clues_found(s, lock):
+        # Same reply for right and wrong codes, and no attempt is counted: the lock
+        # gives no feedback until the player has earned the code inside the game.
+        return Outcome(
+            success=False,
+            event="code_unknown",
+            message=f"You punch in four digits, but you are only guessing: nothing you have found so far "
+            f"tells you the {obj.name}'s code. Blind guesses will not open it; look for clues first.",
+        )
     jammed_until = s.jammed_until.get(obj.id, 0)
     if jammed_until > s.turn:
         turns = jammed_until - s.turn

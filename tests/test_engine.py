@@ -109,8 +109,9 @@ def test_wrong_code_keeps_drawer_locked(room):
 
 
 def test_three_wrong_codes_jam_the_lock_then_it_recovers(room):
-    wrong = [Action(intent=Intent.ENTER_CODE, target="door", code=c) for c in ("0000", "1234", "1900")]
-    state, outcomes = play(room, wrong)
+    clues, _ = play(room, WALKTHROUGH[:8])  # every clue found, door still locked
+    wrong = [Action(intent=Intent.ENTER_CODE, target="door", code=c) for c in ("1874", "4718", "1748")]
+    state, outcomes = play(room, wrong, clues)
     assert [o.event for o in outcomes] == ["wrong_code", "wrong_code", "wrong_code_jammed"]
 
     correct = Action(intent=Intent.ENTER_CODE, target="door", code="1847")
@@ -137,10 +138,24 @@ def test_meta_requests_change_nothing(room):
     assert "1847" not in outcome.message and "7294" not in outcome.message
 
 
-def test_correct_door_code_works_without_clues(room):
-    """Design decision: the keypad checks the code, not how the player learned it."""
-    state, (outcome,) = play(room, [Action(intent=Intent.ENTER_CODE, target="door", code="1847")])
-    assert outcome.event == "escaped" and state.escaped
+def test_codes_do_nothing_until_the_clues_are_found(room):
+    """A code learned outside the game (for example from room.json) cannot skip the puzzles."""
+    attempts = [
+        Action(intent=Intent.ENTER_CODE, target="door", code="1847"),  # correct
+        Action(intent=Intent.ENTER_CODE, target="door", code="0000"),  # wrong
+        Action(intent=Intent.ENTER_CODE, target="drawer", code="7294"),  # correct
+    ]
+    state, outcomes = play(room, attempts)
+    assert [o.event for o in outcomes] == ["code_unknown"] * 3
+    assert outcomes[0].message == outcomes[1].message  # no hint whether the guess was right
+    assert not state.escaped and not state.objects["drawer"].unlocked
+    assert state.failed_attempts == {}  # guesses without clues do not count towards a jam
+
+
+def test_door_needs_both_halves_of_the_code(room):
+    only_portrait, _ = play(room, WALKTHROUGH[:5])  # knows "18__", not the clock
+    state, (outcome,) = play(room, [Action(intent=Intent.ENTER_CODE, target="door", code="1847")], only_portrait)
+    assert outcome.event == "code_unknown" and not state.escaped
 
 
 # ---- invalid actions: objects that do not exist ----------------------------------
@@ -179,6 +194,6 @@ def test_opened_drawer_stays_open_for_the_rest_of_the_game(room):
 def test_code_without_target_goes_to_the_only_closed_lock(room):
     _, (outcome,) = play(room, [Action(intent=Intent.ENTER_CODE, code="1847")])
     assert outcome.event == "which_lock"  # drawer and door are both closed
-    state, _ = play(room, WALKTHROUGH[:3])
+    state, _ = play(room, WALKTHROUGH[:8])  # drawer open, every clue for the door found
     _, (outcome,) = play(room, [Action(intent=Intent.ENTER_CODE, code="1847")], state)
     assert outcome.event == "escaped"

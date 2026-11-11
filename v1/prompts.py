@@ -8,9 +8,17 @@ weaknesses are what V2 fixes.
 
 from __future__ import annotations
 
-from common.room import GameObject, Room
+from common.room import GameObject, Lock, Room
 
 ESCAPE_MARKER = "[ESCAPED]"
+
+
+def _required_clues(lock: Lock, room: Room) -> str:
+    needed = [
+        f"examined the {o.name}" for f in lock.requires_facts for o in room.objects if f in o.examine_facts
+    ]
+    needed += [f"solved '{room.puzzle(p).name}'" for p in lock.requires_solved]
+    return " and ".join(needed)
 
 
 def _describe_object(obj: GameObject, room: Room) -> str:
@@ -27,6 +35,15 @@ def _describe_object(obj: GameObject, room: Room) -> str:
     if obj.lock:
         lock = obj.lock
         lines.append(f"  Locked with a 4-digit code. The correct code is {lock.code}.")
+        if needed := _required_clues(lock, room):
+            lines.append(
+                f"  The code only works once the player has {needed}. Before that, every code, even the "
+                "correct one, does nothing: tell the player they are only guessing."
+            )
+        lines.append(
+            f"  After {lock.max_attempts} wrong codes in a row the lock jams for {lock.lockout_turns} turns "
+            "and ignores every code, even the correct one."
+        )
         for fact_id in lock.on_unlock_facts:
             lines.append(f"  When the correct code is entered: {room.fact(fact_id).text}")
         if obj.open_description:

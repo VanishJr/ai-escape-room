@@ -3,6 +3,8 @@
 from fakes import FakeLLM
 
 from common.llm_client import LLMError
+from v2.engine.actions import Action, Intent
+from v2.engine.rules import resolve
 from v2.game import V2Game
 
 
@@ -57,10 +59,12 @@ def test_parser_failure_keeps_state_and_reports_error():
 
 def test_narrator_failure_still_applies_the_engine_result():
     game, _, state = setup_game(
-        [{"intent": "enter_code", "target": "door", "code": "1847"}], [LLMError("quota")]
+        [{"intent": "enter_code", "target": "drawer", "code": "7294"}], [LLMError("quota")]
     )
-    result = game.process_turn(state, "enter 1847 on the door", [])
-    assert result.used_fallback and result.state.escaped
+    for step in (Action(intent=Intent.EXAMINE, target="bookshelf"), Action(intent=Intent.EXAMINE, target="volumes")):
+        state, _ = resolve(state, step, game.room)  # find the drawer clue, engine only
+    result = game.process_turn(state, "enter 7294 on the drawer", [])
+    assert result.used_fallback and result.state.objects["drawer"].unlocked
     assert "opens" in result.reply
 
 

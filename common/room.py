@@ -21,8 +21,12 @@ DEFAULT_ROOM_PATH = PROJECT_ROOT / "game" / "room.json"
 
 
 class Lock(BaseModel):
-    code: str = Field(pattern=r"^\d{4}$")  # the secret solution
+    code: str = Field(pattern=r"^[0-9]{4}$")  # the secret solution
     puzzle: str  # puzzle solved when the lock opens
+    # The lock only accepts codes once the player has found its clues, so a code
+    # learned outside the game (e.g. from this file) cannot skip the puzzles.
+    requires_facts: list[str] = []
+    requires_solved: list[str] = []
     on_unlock_facts: list[str] = []
     reveals: list[str] = []  # objects that become visible when it opens
     max_attempts: int = 3  # wrong codes in a row before the lock jams
@@ -145,7 +149,8 @@ class Room(BaseModel):
             check(o.examine_reveals, self._objects, f"{o.id}.examine_reveals")
             check(o.examine_facts, self._facts, f"{o.id}.examine_facts")
             if o.lock:
-                check([o.lock.puzzle], self._puzzles, f"{o.id}.lock.puzzle")
+                check([o.lock.puzzle, *o.lock.requires_solved], self._puzzles, f"{o.id}.lock.puzzle")
+                check(o.lock.requires_facts, self._facts, f"{o.id}.lock.requires_facts")
                 check(o.lock.on_unlock_facts, self._facts, f"{o.id}.lock.on_unlock_facts")
                 check(o.lock.reveals, self._objects, f"{o.id}.lock.reveals")
             for use in o.uses:
