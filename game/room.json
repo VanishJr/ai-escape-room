@@ -1,0 +1,143 @@
+{
+  "title": "The Locked Library",
+  "intro": "You wake up on the cold wooden floor of an old private library. Dust hangs in the lamplight, the only window is bricked up, and the heavy iron door is locked. Somewhere in this room is the way out.",
+  "instructions": [
+    "Type what you want to do in plain English, for example: \"examine the bookshelf\", \"take the note\", \"use the flashlight on the painting\", \"enter 1234 on the door\".",
+    "Look around first: examining things reveals details you will need.",
+    "Locks take 4-digit codes. Too many wrong guesses in a row will jam a lock for a few turns.",
+    "Type \"inventory\" to see what you carry and \"hint\" if you are stuck."
+  ],
+  "description": "A dim, silent library. Tall shelves of old books line the walls. In the middle of the room stands a heavy oak desk. A portrait hangs above the fireplace, a grandfather clock stands in the corner next to an antique globe, and the only exit is a heavy iron door with a keypad.",
+  "objects": [
+    {
+      "id": "desk",
+      "name": "oak desk",
+      "aliases": ["desk", "writing desk", "table"],
+      "description": "A heavy oak desk covered in dust. A folded note lies under a brass paperweight. The desk has a single drawer with a 4-digit combination lock.",
+      "examine_reveals": ["note"]
+    },
+    {
+      "id": "drawer",
+      "name": "desk drawer",
+      "aliases": ["drawer", "locked drawer", "combination lock", "padlock"],
+      "description": "The desk's only drawer is held shut by a brass combination lock with four dials.",
+      "open_description": "The drawer stands open; the brass lock hangs loose.",
+      "lock": {
+        "code": "7294",
+        "puzzle": "volumes",
+        "on_unlock_facts": ["drawer_opened"],
+        "reveals": ["uv_flashlight"],
+        "max_attempts": 3,
+        "lockout_turns": 3
+      }
+    },
+    {
+      "id": "bookshelf",
+      "name": "bookshelf",
+      "aliases": ["shelf", "shelves", "bookcase", "books"],
+      "description": "Floor-to-ceiling shelves of dusty books. On one shelf, four tall leather volumes stand out: they are the only books without dust.",
+      "examine_reveals": ["volumes"]
+    },
+    {
+      "id": "volumes",
+      "name": "four leather volumes",
+      "aliases": ["volumes", "four volumes", "four books", "leather books", "marked books", "history of locks"],
+      "description": "Four leather-bound volumes titled 'A History of Locks', numbered I to IV.",
+      "hidden": true,
+      "examine_facts": ["volume_digits"]
+    },
+    {
+      "id": "painting",
+      "name": "portrait",
+      "aliases": ["painting", "picture", "canvas", "frame", "portrait of eleanor"],
+      "description": "A portrait of a stern woman in a high collar. The brass plaque reads 'Eleanor Whitmore, Founder'. In ordinary light the dark background looks empty, though the varnish seems strangely uneven.",
+      "uses": [
+        {"item": "uv_flashlight", "facts": ["painting_message"], "solves": "painting"}
+      ]
+    },
+    {
+      "id": "clock",
+      "name": "grandfather clock",
+      "aliases": ["clock", "old clock", "pendulum clock", "clock hands"],
+      "description": "A tall grandfather clock with Roman numerals. Its pendulum is still.",
+      "examine_facts": ["clock_hands"]
+    },
+    {
+      "id": "globe",
+      "name": "antique globe",
+      "aliases": ["globe", "world globe", "map"],
+      "description": "An antique globe on a wooden stand. Someone has circled London in faded ink, but there is nothing else of interest here."
+    },
+    {
+      "id": "note",
+      "name": "folded note",
+      "aliases": ["note", "paper", "letter", "message", "folded paper"],
+      "description": "A yellowed note written in elegant handwriting.",
+      "hidden": true,
+      "takeable": true,
+      "examine_facts": ["note_text"]
+    },
+    {
+      "id": "uv_flashlight",
+      "name": "UV flashlight",
+      "aliases": ["flashlight", "torch", "uv light", "ultraviolet flashlight", "uv torch", "uv lamp", "black light"],
+      "description": "A small flashlight that gives off a violet ultraviolet glow.",
+      "hidden": true,
+      "takeable": true
+    },
+    {
+      "id": "door",
+      "name": "iron door",
+      "aliases": ["door", "exit", "keypad", "iron door", "metal door"],
+      "description": "A heavy iron door with a numeric keypad that takes four digits. Engraved above it: 'Knowledge is the only key.'",
+      "is_exit": true,
+      "lock": {
+        "code": "1847",
+        "puzzle": "exit",
+        "on_unlock_facts": ["door_opened"],
+        "max_attempts": 3,
+        "lockout_turns": 3
+      }
+    }
+  ],
+  "facts": [
+    {
+      "id": "volume_digits",
+      "text": "Inside the cover of each volume a single digit is written in red ink. On the shelf they stand in this order: Vol. III (digit 9), Vol. I (digit 7), Vol. IV (digit 4), Vol. II (digit 2). A pencilled line on the shelf edge reads: 'From the first volume to the last.'"
+    },
+    {
+      "id": "drawer_opened",
+      "text": "The dials click into place and the drawer slides open. Inside lies a small UV flashlight."
+    },
+    {
+      "id": "painting_message",
+      "text": "Under the ultraviolet light, glowing letters appear across the dark background of the portrait: 'FOUNDED IN 18__'. The last two digits are missing."
+    },
+    {
+      "id": "note_text",
+      "text": "The note reads: 'The year I founded this library opens the door. The last two digits stopped when I did: ask my old clock, hour first.'"
+    },
+    {
+      "id": "clock_hands",
+      "text": "The clock has stopped. The hour hand points exactly at IV and the minute hand points exactly at VII."
+    },
+    {
+      "id": "door_opened",
+      "text": "The keypad flashes green, heavy bolts slide back and the iron door swings open. Fresh air rushes in. You have escaped the library!"
+    }
+  ],
+  "puzzles": [
+    {"id": "volumes", "name": "The four volumes"},
+    {"id": "painting", "name": "The hidden message"},
+    {"id": "clock", "name": "The stopped clock", "solved_when_facts": ["note_text", "clock_hands"]},
+    {"id": "exit", "name": "The iron door", "final": true}
+  ],
+  "hints": [
+    {"puzzle": "volumes", "requires_facts": ["volume_digits"], "text": "The volumes are numbered I to IV. Read their digits from the first volume to the last, not in shelf order, and try that on the drawer."},
+    {"puzzle": "volumes", "text": "The bookshelf deserves a closer look, and so does anything on it that looks out of place."},
+    {"puzzle": "painting", "requires_solved": ["volumes"], "text": "Some inks only show under special light. Make sure you carry what was in the drawer, then look at the portrait again."},
+    {"puzzle": "clock", "requires_facts": ["note_text"], "text": "The note talks about the old clock. Where exactly did its hands stop? Roman numerals are numbers too."},
+    {"puzzle": "clock", "text": "There is something on the desk worth reading."},
+    {"puzzle": "exit", "requires_solved": ["painting", "clock"], "text": "Combine what the portrait and the clock told you into a four-digit year and try it on the door."}
+  ]
+}
