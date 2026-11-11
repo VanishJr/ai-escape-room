@@ -45,10 +45,10 @@ flowchart LR
 |---|---|
 | `v2/engine/state.py` | `GameState`: discovered objects, inventory, open locks, solved puzzles, known clues, failed attempts and lockouts, turn counter, escaped flag, action log. Plain Pydantic model, shown as JSON in the debug panel. |
 | `v2/engine/actions.py` | The `Action` schema: a fixed set of intents (`examine`, `take`, `use`, `open`, `enter_code`, `meta`, ...) with target, item and code. |
-| `v2/engine/rules.py` | `resolve(state, action) -> (new_state, Outcome)`: a pure function that validates every action (object discovered? item carried? code correct? lock jammed?) and is the only code that changes the state or sets `escaped`. |
-| `v2/llm/parser.py` | Gemini structured output turns free text into an `Action`. It sees only discovered objects, never codes. Codes are copied from the player's text with a regex. Claims, impersonation and instructions become `meta`. |
-| `v2/llm/narrator.py` | Gemini writes the reply from the engine's `Outcome`, the clues just revealed and the visible state. It never receives unsolved codes or undiscovered clues. |
-| `v2/secrets_guard.py` | Checks every reply for codes of locks that are still closed (also as `7-2-9-4` or `7, 2, 9, 4`). On a leak: one regeneration, then the engine's plain text. |
+| `v2/engine/rules.py` | `resolve(state, action) -> (new_state, Outcome)`: a pure function that validates every action (object discovered? item carried? clues for this lock found? lock jammed? code correct?) and is the only code that changes the state or sets `escaped`. |
+| `v2/llm/parser.py` | Gemini structured output turns free text into an `Action`. It sees only discovered objects, never codes. A code is only ever a number the player typed (normalised by `v2/digits.py`). Claims, impersonation and instructions become `meta`. |
+| `v2/llm/narrator.py` | Gemini writes the reply from the engine's `Outcome`, the clues just revealed and the visible state. It never receives the codes or undiscovered clues. The player's text comes last, as a JSON string, so it cannot forge an engine result. `meta`/`unknown` turns are narrated without history, so there are no earlier clues to confirm. |
+| `v2/secrets_guard.py` | Checks every reply for codes of locks that are still closed (also as `7-2-9-4`, `7, 2, 9, 4` or full-width digits); only a code the player entered into a lock this turn may be echoed. On a leak: one regeneration, then the engine's plain text. |
 | `v2/game.py` | Orchestrates one turn. Parser failure: nothing changes. Narrator failure: the engine result still applies and its plain text is shown. |
 
 ### One turn, step by step
@@ -70,10 +70,11 @@ sequenceDiagram
 
 ### Defence in depth
 
-1. **Information hiding.** Codes and undiscovered clues never enter an LLM prompt, so no prompt
-   manipulation can make the model reveal them.
+1. **Information hiding.** Codes and undiscovered clues never enter an LLM prompt. Clues the player has
+   found do, so out-of-game requests are narrated without them.
 2. **Constrained interface.** The only thing the parser can output is one `Action` from a fixed schema.
    Even a fully manipulated parser can at most request a normal action.
 3. **Validation in code.** The engine checks every action against the state and the rules from `room.json`.
-4. **Output check.** The secrets guard catches a narrator that combines clues into a code.
-5. **Graceful degradation.** Without the LLM the engine's own text keeps the game correct.
+4. **Output check.** The secrets guard catches a narrator that combines found clues into a code.
+5. **Graceful degradation.** If the narrator fails, the engine's own text keeps the game correct; if the
+   parser fails, the turn is simply not played.
