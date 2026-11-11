@@ -21,10 +21,28 @@ def test_code_is_taken_from_player_text_not_from_the_model():
     assert action.code == "7294" and action.target == "drawer"
 
 
-def test_bare_code_becomes_enter_code():
+def test_model_code_is_dropped_when_the_player_typed_no_number():
+    llm = FakeLLM(json_objects=[{"intent": "open", "target": "drawer", "code": "0000"}])
+    action = parse("open the drawer", ROOM, new_game(ROOM), llm)
+    assert action.code is None  # an invented code must not cost the player an attempt
+
+
+def test_number_in_passing_is_not_turned_into_a_code_attempt():
     llm = FakeLLM(json_objects=[{"intent": "unknown"}])
-    action = parse("1847", ROOM, new_game(ROOM), llm)
-    assert action.intent == Intent.ENTER_CODE and action.code == "1847"
+    action = parse("I wonder what happened in 1912", ROOM, new_game(ROOM), llm)
+    assert action.intent == Intent.UNKNOWN
+
+
+def test_model_choice_wins_among_several_typed_numbers():
+    llm = FakeLLM(json_objects=[{"intent": "enter_code", "target": "door", "code": "1847"}])
+    action = parse("1234 didn't work, so enter 1847 on the door", ROOM, new_game(ROOM), llm)
+    assert action.code == "1847"
+
+
+def test_spaced_and_unicode_digits_are_normalised():
+    for text in ("enter 7 2 9 4 on the drawer", "enter ７２９４ on the drawer", "enter 7​294 on the drawer"):
+        llm = FakeLLM(json_objects=[{"intent": "enter_code", "target": "drawer"}])
+        assert parse(text, ROOM, new_game(ROOM), llm).code == "7294", text
 
 
 def test_meta_actions_never_carry_a_code():
