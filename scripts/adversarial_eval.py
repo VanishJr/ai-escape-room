@@ -32,6 +32,11 @@ from common.config import PROJECT_ROOT, Settings, get_settings
 from common.llm_client import ChatTurn, GeminiClient, LLMError, QuotaExhausted
 from common.room import Room, default_room
 from v1.game import V1Game
+from v2.engine.actions import Action
+from v2.engine.rules import resolve
+from v2.engine.state import GameState
+from v2.game import V2Game
+from v2.llm.narrator import NarrationTurn, build_turn_prompt
 
 CASES_PATH = Path(__file__).with_name("adversarial_cases.json")
 RESULTS_DIR = PROJECT_ROOT / "docs" / "evals"
@@ -63,7 +68,44 @@ def run_v1(case: dict, steps: dict, client: GeminiClient, room: Room) -> dict:
     return {"reply": reply.text, "escaped": reply.escaped}
 
 
-RUNNERS = {"v1": run_v1}
+def _progress(state: GameState) -> dict:
+    return {
+        "solved": sorted(state.solved),
+        "inventory": sorted(state.inventory),
+        "unlocked": sorted(o for o, st in state.objects.items() if st.unlocked),
+        "escaped": state.escaped,
+    }
+
+
+def run_v2(case: dict, steps: dict, client: GeminiClient, room: Room) -> dict:
+    game = V2Game(client, room)
+    state = game.new_game()
+    history: list[NarrationTurn] = []
+    for step_id in case["setup"]:  # replay the setup through the engine only, no API calls
+        step = steps[step_id]
+        action = Action(**step["action"])
+        state, outcome = resolve(state, action, room)
+        prompt = build_turn_prompt(step["text"], action, outcome, state, room)
+        history.append(NarrationTurn(prompt, resolve_reply(step["reply"], room)))
+
+    result = game.process_turn(state, case["attack"], history)
+    if result.error:
+        if "daily free-tier quota" in result.error:
+            raise QuotaExhausted(result.error)
+        raise LLMError(result.error)
+    if result.used_fallback and not result.guard_triggered:
+        raise LLMError("Narrator unavailable; the run would not test the LLM.")  # retry later
+    return {
+        "reply": result.reply,
+        "escaped": result.state.escaped,
+        "state_changed": _progress(result.state) != _progress(state),
+        "parsed": result.action.model_dump(mode="json"),
+        "event": result.outcome.event,
+        "guard_triggered": result.guard_triggered,
+    }
+
+
+RUNNERS = {"v1": run_v1, "v2": run_v2}
 
 
 def judge(case: dict, outcome: dict) -> dict:
@@ -115,7 +157,11 @@ def write_summary(version: str, cases: list[dict], results: list[dict]) -> Path:
         lines += [f"**Expected:** {case['expected']}", ""]
         for r in by_case[case["id"]]:
             verdict = "ATTACK SUCCEEDED" if r["attack_succeeded"] else "held"
-            lines += [f"- Run {r['run']} ({r['model']}) — **{verdict}**", ""]
+            engine = ""
+            if "event" in r:
+                engine = f" · parsed as `{r['parsed']['intent']}`, engine event `{r['event']}`"
+                engine += " · leak guard triggered" if r.get("guard_triggered") else ""
+            lines += [f"- Run {r['run']} ({r['model']}) — **{verdict}**{engine}", ""]
             lines += ["  > " + r["reply"].replace("\n", "\n  > "), ""]
     path = RESULTS_DIR / f"{version}_summary.md"
     path.write_text("\n".join(lines), encoding="utf-8")
