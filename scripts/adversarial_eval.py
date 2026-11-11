@@ -149,7 +149,7 @@ def main() -> int:
             parser_models=base.parser_models,
         )
         # patient retries: free-tier models often return 503 "high demand" for a while
-        client = GeminiClient(settings, max_retries=3, base_delay=5.0)
+        client = GeminiClient(settings, max_retries=3, base_delay=5.0, timeout_s=60.0)
         pinned = args.model or "chain"
         done = {(r["case"], r["pinned"], r["run"]) for r in results}
         todo = [

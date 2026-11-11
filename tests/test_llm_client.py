@@ -43,7 +43,8 @@ class FakeModels:
 
 
 def make_client(script: dict[str, list], models=("main", "backup")) -> tuple[GeminiClient, FakeModels]:
-    client = GeminiClient(Settings(api_key="test", models=models, parser_models=("parser",)), base_delay=0)
+    settings = Settings(api_key="test", models=models, parser_models=("parser",))
+    client = GeminiClient(settings, max_retries=2, base_delay=0)
     fake = FakeModels(script)
     client._client = SimpleNamespace(models=fake)
     return client, fake

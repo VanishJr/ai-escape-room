@@ -65,10 +65,10 @@ class GeminiClient:
         self,
         settings: Settings | None = None,
         *,
-        max_retries: int = 2,
+        max_retries: int = 1,
         base_delay: float = 2.0,
         max_wait: float = 60.0,
-        timeout_s: float = 45.0,
+        timeout_s: float = 30.0,
     ):
         self.settings = settings or get_settings()
         if not self.settings.api_key:
