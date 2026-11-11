@@ -78,7 +78,8 @@ flowchart LR
 ```
 
 The prompt states the same rules V2 enforces (collected items only, locks need their clues, lockout after
-three wrong codes). This works well for players who cooperate. But every rule is only a request to the model:
+three wrong codes). The `v1.0` tag marks the first finished V1; the lock rules were added to its prompt later,
+so that both versions are evaluated against the same rules. This works well for players who cooperate. But every rule is only a request to the model:
 the LLM decides whether an action succeeds, keeps track of progress and is trusted to keep the codes secret.
 
 ## Version 2: Reliable AI Escape Room
