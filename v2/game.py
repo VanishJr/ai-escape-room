@@ -22,7 +22,7 @@ from v2.engine.actions import Action, Intent
 from v2.engine.rules import Outcome, resolve
 from v2.engine.state import GameState, new_game
 from v2.llm.narrator import NarrationTurn, build_turn_prompt, fallback_reply, narrate
-from v2.llm.parser import parse
+from v2.llm.parser import parse, quick_parse
 from v2.secrets_guard import find_leaks, protected_codes
 
 LEAK_RETRY_INSTRUCTION = (
@@ -40,7 +40,10 @@ class TurnResult:
     narration: NarrationTurn | None = None  # append to the history for the next turn
     used_fallback: bool = False  # reply came from the engine, not the narrator
     guard_triggered: bool = False  # the narrator's first reply leaked a code
-    error: str | None = None
+    error: str | None = None  # the parser failed: the turn was not played
+    parser_model: str | None = None  # None when a quick command needed no LLM
+    narrator_model: str | None = None
+    narrator_error: LLMError | None = None  # why the engine fallback text was used
 
 
 class V2Game:
@@ -62,6 +65,7 @@ class V2Game:
                 reply=f"The Game Master could not process that right now ({exc}). Nothing has changed.",
                 error=str(exc),
             )
+        parser_model = None if quick_parse(player_text) else getattr(self.llm, "last_model", None)
 
         new_state, outcome = resolve(state, action, self.room)
         turn_prompt = build_turn_prompt(player_text, action, outcome, new_state, self.room)
@@ -72,6 +76,7 @@ class V2Game:
         recent = [] if action.intent in (Intent.META, Intent.UNKNOWN) else history[-self.HISTORY_TURNS :]
 
         guard_triggered = used_fallback = False
+        narrator_model = narrator_error = None
         try:
             reply = narrate(self.llm, self.room, turn_prompt, recent)
             if find_leaks(reply, codes):
@@ -79,10 +84,14 @@ class V2Game:
                 reply = narrate(self.llm, self.room, turn_prompt, recent, LEAK_RETRY_INSTRUCTION)
                 if find_leaks(reply, codes):
                     reply, used_fallback = fallback_reply(outcome), True
-        except LLMError:
-            reply, used_fallback = fallback_reply(outcome), True
+            narrator_model = getattr(self.llm, "last_model", None)
+        except LLMError as exc:
+            reply, used_fallback, narrator_error = fallback_reply(outcome), True, exc
 
         return TurnResult(
+            parser_model=parser_model,
+            narrator_model=narrator_model,
+            narrator_error=narrator_error,
             state=new_state,
             reply=reply,
             action=action,

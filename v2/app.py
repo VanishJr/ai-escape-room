@@ -10,6 +10,7 @@ import streamlit as st
 from common.llm_client import GeminiClient, LLMError
 from common.room import default_room
 from common.ui import render_header, render_instructions, render_opening, render_turn
+from v2.engine.state import GameState, new_game
 from v2.game import TurnResult, V2Game
 
 st.set_page_config(page_title="AI Escape Room · V2", page_icon="🗝️")
@@ -22,16 +23,24 @@ def get_llm() -> GeminiClient:
 
 
 def reset_game() -> None:
-    st.session_state.state = V2Game(llm=None, room=room).new_game()  # type: ignore[arg-type]
-    st.session_state.chat = []  # list of (role, text) shown to the player
-    st.session_state.narration = []  # past narrator exchanges
-    st.session_state.last_turn = None  # TurnResult of the latest turn, for the debug panel
+    # One dict, replaced as a whole after each turn, so a rerun can never see half a turn.
+    st.session_state.v2 = {
+        "state": new_game(room),  # the authoritative game state
+        "chat": [],  # (role, text) pairs shown to the player
+        "narration": [],  # past narrator exchanges
+        "last_turn": None,  # TurnResult of the latest turn, for the debug panel
+    }
     st.session_state.celebrate = False
 
 
-if "state" not in st.session_state:
+def queue_retry(text: str) -> None:
+    st.session_state.retry_text = text
+
+
+if "v2" not in st.session_state:
     reset_game()
-state = st.session_state.state
+session = st.session_state.v2
+state: GameState = session["state"]
 
 
 def render_progress() -> None:
@@ -52,11 +61,13 @@ def render_debug(turn: TurnResult | None) -> None:
             st.json(turn.action.model_dump(mode="json"))
             st.markdown(f"**Engine result:** `{turn.outcome.event}` ({'success' if turn.outcome.success else 'refused'})")
             st.markdown(
-                f"Narrator model: `{get_llm().last_model}` · fallback to engine text: `{turn.used_fallback}` "
-                f"· leak guard triggered: `{turn.guard_triggered}`"
+                f"Parser: `{turn.parser_model or 'no LLM needed'}` · narrator: `{turn.narrator_model or 'engine text'}`"
+                f" · leak guard triggered: `{turn.guard_triggered}`"
             )
-        st.markdown("**Game state**")
-        st.json(state.model_dump(mode="json", exclude={"log"}), expanded=False)
+        st.markdown("**Game state** (objects you have discovered)")
+        data = state.model_dump(mode="json", exclude={"log"})
+        data["objects"] = {k: v for k, v in data["objects"].items() if v["visible"]}  # no spoilers
+        st.json(data, expanded=False)
 
 
 with st.sidebar:
@@ -65,12 +76,12 @@ with st.sidebar:
     st.divider()
     render_progress()
     st.divider()
-    render_debug(st.session_state.last_turn)
+    render_debug(session["last_turn"])
     st.caption("Version 2: Python validates every action and owns the game state; the LLM only narrates.")
 
 render_header(room, "Version 2 — Reliable")
 render_opening(room)
-for role, text in st.session_state.chat:
+for role, text in session["chat"]:
     render_turn(role, text)
 
 if state.escaped:
@@ -79,22 +90,27 @@ if state.escaped:
         st.balloons()
         st.session_state.celebrate = False
 
-player_text = st.chat_input("What do you do?", disabled=state.escaped)
+typed = st.chat_input("What do you do?", disabled=state.escaped)
+player_text = typed or st.session_state.pop("retry_text", None)
 if player_text:
     render_turn("user", player_text)
     try:
         with st.spinner("The Game Master is thinking..."):
-            result = V2Game(get_llm(), room).process_turn(state, player_text, st.session_state.narration)
+            result = V2Game(get_llm(), room).process_turn(state, player_text, session["narration"])
     except LLMError as exc:  # e.g. missing API key
-        st.error(f"The Game Master is unavailable: {exc}")
+        result = None
+        error = str(exc)
+    else:
+        error = result.error
+    if error:
+        st.error(f"The Game Master is unavailable: {error}")
+        st.button("Retry", on_click=queue_retry, args=(player_text,))
         st.stop()
-    if result.error:
-        st.warning(result.reply)
-        st.stop()
-    st.session_state.state = result.state
-    st.session_state.chat += [("user", player_text), ("assistant", result.reply)]
-    st.session_state.narration.append(result.narration)
-    st.session_state.last_turn = result
-    if result.state.escaped:
-        st.session_state.celebrate = True
+    st.session_state.v2 = {
+        "state": result.state,
+        "chat": [*session["chat"], ("user", player_text), ("assistant", result.reply)],
+        "narration": [*session["narration"], result.narration],
+        "last_turn": result,
+    }
+    st.session_state.celebrate = result.state.escaped
     st.rerun()

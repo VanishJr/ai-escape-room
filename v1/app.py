@@ -22,13 +22,18 @@ def get_game() -> V1Game:
 
 
 def reset_game() -> None:
-    st.session_state.history = []  # list[ChatTurn]: the only game state in V1
-    st.session_state.escaped = False
+    # One dict, replaced as a whole after each turn, so a rerun can never see half a turn.
+    st.session_state.v1 = {"history": [], "escaped": False}  # the chat history is V1's only game state
     st.session_state.celebrate = False
 
 
-if "history" not in st.session_state:
+def queue_retry(text: str) -> None:
+    st.session_state.retry_text = text
+
+
+if "v1" not in st.session_state:
     reset_game()
+game_state = st.session_state.v1
 
 with st.sidebar:
     render_instructions(room)
@@ -38,26 +43,27 @@ with st.sidebar:
 
 render_header(room, "Version 1 — Interactive")
 render_opening(room)
-for turn in st.session_state.history:
+for turn in game_state["history"]:
     render_turn(turn.role, turn.text)
 
-if st.session_state.escaped:
+if game_state["escaped"]:
     st.success("You escaped the library! Press **Restart game** to play again.")
     if st.session_state.celebrate:
         st.balloons()
         st.session_state.celebrate = False
 
-player_text = st.chat_input("What do you do?", disabled=st.session_state.escaped)
+typed = st.chat_input("What do you do?", disabled=game_state["escaped"])
+player_text = typed or st.session_state.pop("retry_text", None)
 if player_text:
     render_turn("user", player_text)
     try:
         with st.spinner("The Game Master is thinking..."):
-            reply = get_game().process_turn(st.session_state.history, player_text)
+            reply = get_game().process_turn(game_state["history"], player_text)
     except LLMError as exc:
         st.error(f"The Game Master is unavailable: {exc}")
+        st.button("Retry", on_click=queue_retry, args=(player_text,))
         st.stop()
-    st.session_state.history += [ChatTurn("user", player_text), ChatTurn("model", reply.text)]
-    if reply.escaped:
-        st.session_state.escaped = True
-        st.session_state.celebrate = True
+    history = [*game_state["history"], ChatTurn("user", player_text), ChatTurn("model", reply.text)]
+    st.session_state.v1 = {"history": history, "escaped": reply.escaped}
+    st.session_state.celebrate = reply.escaped
     st.rerun()
