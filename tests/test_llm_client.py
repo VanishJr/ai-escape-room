@@ -70,6 +70,20 @@ def test_all_models_exhausted_raises_clear_error():
         client.generate_text("sys", [ChatTurn("user", "hello")])
 
 
+def test_timeouts_and_overload_fall_back_to_next_model():
+    overloaded = errors.ServerError(503, {"error": {"code": 503, "message": "high demand", "status": "UNAVAILABLE"}})
+    client, fake = make_client({"main": [TimeoutError(), overloaded, overloaded], "backup": ["fine"]})
+    assert client.generate_text("sys", [ChatTurn("user", "hello")]) == "fine"
+    assert fake.calls == ["main", "main", "main", "backup"]
+
+
+def test_single_overloaded_model_raises_llm_error():
+    overloaded = errors.ServerError(503, {"error": {"code": 503, "message": "high demand", "status": "UNAVAILABLE"}})
+    client, _ = make_client({"main": [overloaded] * 3}, models=("main",))
+    with pytest.raises(LLMError, match="overloaded"):
+        client.generate_text("sys", [ChatTurn("user", "hello")])
+
+
 def test_client_error_is_not_retried():
     bad_request = errors.ClientError(400, {"error": {"code": 400, "message": "bad", "status": "INVALID_ARGUMENT"}})
     client, fake = make_client({"main": [bad_request]})
