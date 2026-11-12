@@ -41,7 +41,8 @@ The Gemini free tier allows only about 20 requests per day per model, and free m
 fallback chains: when a model's daily quota is used up, or it keeps failing, the client moves on to the
 next model. A model that hits a per-minute limit is skipped until the delay the API asks for has passed.
 Some model names share one quota (`gemini-3.5-flash` counts against `gemini-3.6-flash`, `gemini-3.7-flash`
-against `gemini-3.8-flash`), so the default chains list only models with their own quota.
+against `gemini-3.8-flash`), so the default chains leave them out. `gemini-3.1-flash-lite` is the last
+fallback of both chains: when V2 relies on it for parsing and narration, each turn uses two of its requests.
 
 ## The game: The Locked Library
 
@@ -142,7 +143,7 @@ docs/       architecture, test cases, evaluation results, report
 
 ## Testing
 
-- `uv run pytest` runs 106 offline tests with a scripted fake LLM: the engine rules and every assignment
+- `uv run pytest` runs 114 offline tests with a scripted fake LLM: the engine rules and every assignment
   challenge at engine level, the parser's code handling, the secrets guard, the turn pipeline when the LLM
   fails or leaks, the Gemini client's retry policy, both Streamlit apps and the evaluation script.
 - `scripts/adversarial_eval.py` attacks V1 and V2 with the same fourteen cases on the same models. Each case
