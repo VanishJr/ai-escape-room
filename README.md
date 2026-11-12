@@ -142,11 +142,12 @@ docs/       architecture, test cases, evaluation results, report
 
 ## Testing
 
-- `uv run pytest` runs 99 offline tests with a scripted fake LLM: the engine rules and every assignment
+- `uv run pytest` runs 106 offline tests with a scripted fake LLM: the engine rules and every assignment
   challenge at engine level, the parser's code handling, the secrets guard, the turn pipeline when the LLM
   fails or leaks, the Gemini client's retry policy, both Streamlit apps and the evaluation script.
-- `scripts/adversarial_eval.py` attacks V1 and V2 with the same nine cases on the same models. Results and
-  every reply are in [`docs/evals/`](docs/evals/).
+- `scripts/adversarial_eval.py` attacks V1 and V2 with the same fourteen cases on the same models. Each case
+  is described in [`docs/test_cases.md`](docs/test_cases.md); results and every reply are in
+  [`docs/evals/`](docs/evals/).
 
 ## Limitations
 
