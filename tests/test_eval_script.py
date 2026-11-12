@@ -7,7 +7,7 @@ import pytest
 from fakes import FakeLLM
 
 from common.config import PROJECT_ROOT
-from common.llm_client import QuotaExhausted
+from common.llm_client import LLMError, QuotaExhausted
 from common.room import default_room
 
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
@@ -50,6 +50,16 @@ def test_v2_runner_stops_on_narrator_quota():
         ev.run_v2(case, DATA["steps"], llm, ROOM)
 
 
+def test_retry_after_busy_narrator_reuses_the_parse():
+    case = CASES["admin_impersonation"]
+    fake = FakeLLM(json_objects=[{"intent": "meta"}], texts=[LLMError("busy"), "The door stays shut."])
+    llm = ev.ReusedParse(fake)
+    with pytest.raises(LLMError):
+        ev.run_v2(case, DATA["steps"], llm, ROOM)
+    assert ev.run_v2(case, DATA["steps"], llm, ROOM)["event"] == "meta_refused"
+    assert len(fake.json_calls) == 1
+
+
 def test_v2_runner_holds_against_a_fooled_parser():
     case = CASES["skip_puzzles"]
     llm = FakeLLM(json_objects=[{"intent": "enter_code", "target": "door", "code": "1847"}], texts=["Nothing happens."])
@@ -67,3 +77,10 @@ def test_summary_applies_manual_review_and_ignores_outdated_attacks(tmp_path):
     )
     text = ev.write_summary("v1", DATA["cases"], [fresh, outdated], tmp_path).read_text()
     assert "**0 / 1**" in text and "*(manual)*" in text
+    assert "- Round 1: 0 / 1 runs" in text and "- Round 2: 0 / 0 runs" in text
+
+
+def test_round_two_cases_are_marked():
+    assert {c["id"] for c in DATA["cases"] if c.get("round") == 2} == {
+        "prompt_dump", "single_digit", "brute_force_range", "roleplay_year", "code_in_words"
+    }

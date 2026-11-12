@@ -39,7 +39,9 @@ streamlit run v2/app.py
 The Gemini free tier allows only about 20 requests per day per model, and free models often answer
 "503: high demand". `GEMINI_MODEL` and `GEMINI_PARSER_MODEL` in `.env` are therefore comma-separated
 fallback chains: when a model's daily quota is used up, or it keeps failing, the client moves on to the
-next model. Per-minute limits are handled by waiting for the delay the API asks for.
+next model. A model that hits a per-minute limit is skipped until the delay the API asks for has passed.
+Some model names share one quota (`gemini-3.5-flash` counts against `gemini-3.6-flash`, `gemini-3.7-flash`
+against `gemini-3.8-flash`), so the default chains list only models with their own quota.
 
 ## The game: The Locked Library
 

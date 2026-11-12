@@ -77,6 +77,7 @@ The same plain text is used when the narrator is unavailable, so the game stays 
 ## 6. Testing and evaluation
 
 **Unit tests.** 99 pytest tests run without an API key, using a scripted fake LLM. They cover:
+
 - the complete walkthrough and every assignment challenge at engine level: uncollected items, wrong codes,
   false claims, admin requests, nonexistent objects, and codes entered before their clues are found;
 - lockout and recovery, and state consistency over long sessions;
