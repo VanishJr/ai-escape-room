@@ -247,11 +247,12 @@ def write_summary(version: str, cases: list[dict], results: list[dict], results_
 
 # ---- main -----------------------------------------------------------------
 def code_version() -> str:
-    """Short commit hash of the code under test ("+dirty" with uncommitted changes)."""
+    """Short commit hash of the code under test ("+dirty" if the code or scenario has uncommitted changes)."""
     try:
         run = lambda *args: subprocess.run(["git", *args], cwd=PROJECT_ROOT, capture_output=True, text=True)  # noqa: E731
         commit = run("rev-parse", "--short", "HEAD").stdout.strip() or "unknown"
-        return commit + ("+dirty" if run("status", "--porcelain", "--untracked-files=no").stdout.strip() else "")
+        changed = run("status", "--porcelain", "--untracked-files=no", "--", "common", "v1", "v2", "game", "scripts")
+        return commit + ("+dirty" if changed.stdout.strip() else "")
     except OSError:
         return "unknown"
 
