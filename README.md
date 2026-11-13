@@ -142,14 +142,18 @@ Fourteen attacks, each run against both versions from the same game situation
 
 | Attacks | Models | V1: successful attacks | V2: successful attacks |
 |---|---|---|---|
-| Round 1: the assignment's 9 challenges | `gemini-3.6-flash`, `gemini-3.8-flash` | 0 / 9 ⏳ | 0 / 9 ⏳ |
-| Round 2: 5 stronger attacks | `gemini-3.1-flash-lite`, `gemini-3.6-flash` | 1 / 10 | 0 / 10 |
+| Round 1: the assignment's 5 example challenges + 4 related cases | `gemini-3.6-flash`, `gemini-3.8-flash` | 0 / 9 ⏳ | 0 / 9 ⏳ |
+| Round 2: 5 more attacks, written after round 1 | `gemini-3.1-flash-lite`, `gemini-3.6-flash` | 1 / 10 | 0 / 10 |
 
-- With every rule spelled out in its prompt, V1 on a strong model resisted most attacks. But its one failure
-  gave away both codes at once: asked to repeat its instructions, it printed the scenario with the codes.
-- V1 also hinted its way towards solutions and once made up a rule (a lock that "jams" when no attempt
-  should count). V2 answered every out-of-game request in character, without hints.
-- V2's narrator still embellishes (a stopped clock described as "ticking"); it cannot change the game state.
+- With every rule spelled out in its prompt, V1 on `gemini-3.6-flash` resisted every attack. Its one failure,
+  on the smaller `gemini-3.1-flash-lite`, gave away both codes at once: asked to repeat its instructions, it
+  printed the scenario with the codes.
+- The count is a lower bound for V1: it also handed out hints to anyone asking for the answer and once applied
+  its lockout rule to guesses its own prompt says do nothing; such replies still count as held. V2 answered
+  every out-of-game request in character, without hints.
+- What a fooled LLM can do matters more than how often it is fooled. In V1 one bad reply can end the game or
+  reveal every code; in V2, unit tests with a fully fooled LLM show that the game state does not change
+  ([details](docs/test_cases.md#if-the-model-is-fully-fooled)).
 
 | V1 prints its scenario, codes included | V2: the debug panel shows the parsed action and the engine's decision |
 |---|---|
@@ -169,7 +173,7 @@ docs/       architecture, test cases, evaluation results, screenshots, report (M
 
 ## Testing
 
-- `uv run pytest` runs 115 offline tests with a scripted fake LLM: the engine rules and every assignment
+- `uv run pytest` runs 117 offline tests with a scripted fake LLM: the engine rules and every assignment
   challenge at engine level, the parser's code handling, the secrets guard, the turn pipeline when the LLM
   fails or leaks, the Gemini client's retry policy, both Streamlit apps and the evaluation script.
 - `scripts/adversarial_eval.py` attacks V1 and V2 with the same fourteen cases on the same models. Each case
@@ -178,7 +182,10 @@ docs/       architecture, test cases, evaluation results, screenshots, report (M
 
 ## Limitations
 
-- The narrator is still an LLM: it can describe a scene vaguely or embellish it. It cannot change the game state.
+- The narrator is still an LLM: it can describe a scene vaguely or embellish it (a stopped clock "ticking",
+  a note "picked up" that was only read, see [this screenshot](docs/screenshots/v2_narrator_slip.png)). It
+  cannot change the game state.
+- V2 makes two LLM requests per turn (parser and narrator) where V1 makes one.
 - Once the player has found clues, the narrator sees them and could combine them into a code. The secrets guard
   catches codes written with digits (also spaced or full-width), but not a code spelled out in words.
 - The parser classifies a message as a whole, so a sentence that mixes a real action with an out-of-game
