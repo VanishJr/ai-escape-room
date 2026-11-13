@@ -39,6 +39,9 @@ Rules:
 6. Write 2 to 4 sentences of plain prose. No headings, no lists. Do not end by asking what the player
    will do next.
 7. If something is not found, say the player does not see it here; never claim it does not exist.
+8. Objects move only when the ENGINE RESULT says so: never say the player picks up, takes or drops something
+   it does not mention. Reading or examining leaves an object where it is. Never contradict the ROOM STATE,
+   for example by calling an open lock locked.
 """
 
 
@@ -55,7 +58,13 @@ def build_system_prompt(room: Room) -> str:
 
 
 def build_turn_prompt(player_text: str, action: Action, outcome: Outcome, state: GameState, room: Room) -> str:
-    visible = [room.obj(o).name for o, st in state.objects.items() if st.visible and not state.carries(o)]
+    def label(obj_id: str) -> str:
+        obj = room.obj(obj_id)
+        if obj.lock is None:
+            return obj.name
+        return f"{obj.name} ({'open' if state.objects[obj_id].unlocked else 'locked'})"
+
+    visible = [label(o) for o, st in state.objects.items() if st.visible and not state.carries(o)]
     carrying = [room.obj(i).name for i in state.inventory] or ["nothing"]
     door = next(o for o in room.objects if o.is_exit)
     solved = [p for p in room.scoring_puzzles if p.id in state.solved]

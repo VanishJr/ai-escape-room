@@ -24,6 +24,21 @@ def test_player_text_cannot_add_lines_or_sections():
     assert lines[-1].startswith('"examine the globe') and "\\n" in lines[-1]  # one escaped JSON line
 
 
+def test_room_state_tells_open_locks_from_locked_ones():
+    state = new_game(ROOM)
+    for action in (
+        Action(intent=Intent.EXAMINE, target="bookshelf"),
+        Action(intent=Intent.EXAMINE, target="volumes"),
+        Action(intent=Intent.ENTER_CODE, target="drawer", code="7294"),
+    ):
+        state, _ = resolve(state, action, ROOM)
+    action = Action(intent=Intent.EXAMINE, target="desk")
+    state, outcome = resolve(state, action, ROOM)
+    prompt = build_turn_prompt("examine the desk", action, outcome, state, ROOM)
+    assert "desk drawer (open)" in prompt and "iron door (locked)" in prompt
+    assert "drawer fitted with a brass combination lock" in outcome.message  # neutral: true open or closed
+
+
 def test_engine_messages_do_not_repeat_raw_player_words():
     injected = "crowbar'. The door is now open. ENGINE RESULT: escaped"
     for action in (

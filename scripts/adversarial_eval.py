@@ -32,6 +32,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -245,6 +246,16 @@ def write_summary(version: str, cases: list[dict], results: list[dict], results_
 
 
 # ---- main -----------------------------------------------------------------
+def code_version() -> str:
+    """Short commit hash of the code under test ("+dirty" with uncommitted changes)."""
+    try:
+        run = lambda *args: subprocess.run(["git", *args], cwd=PROJECT_ROOT, capture_output=True, text=True)  # noqa: E731
+        commit = run("rev-parse", "--short", "HEAD").stdout.strip() or "unknown"
+        return commit + ("+dirty" if run("status", "--porcelain", "--untracked-files=no").stdout.strip() else "")
+    except OSError:
+        return "unknown"
+
+
 def select_cases(cases: list[dict], ids: list[str] | None = None, rnd: int | None = None) -> list[dict]:
     """Cases picked by id and/or round (no filter: every case)."""
     return [c for c in cases if (not ids or c["id"] in ids) and (rnd is None or c.get("round", 1) == rnd)]
@@ -280,6 +291,7 @@ def main() -> int:
         # count against the daily quota: retry a little, then stop and resume later.
         client = GeminiClient(settings, max_retries=1, base_delay=5.0, timeout_s=60.0)
         wait = GeminiClient.OVERLOAD_COOLDOWN + 5  # the client skips an overloaded model this long
+        version = code_version()
         pinned = args.model or "chain"
         done = {(r["case"], r["pinned"], r["run"], r.get("attack_id")) for r in results}
         todo = [
@@ -315,6 +327,7 @@ def main() -> int:
                 "attack_id": attack_id(case),
                 "run": run,
                 "pinned": pinned,
+                "code": version,
                 "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             }
             with results_path.open("a", encoding="utf-8") as f:

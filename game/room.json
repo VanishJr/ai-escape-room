@@ -13,8 +13,8 @@
       "id": "desk",
       "name": "oak desk",
       "aliases": ["desk", "writing desk", "table", "paperweight"],
-      "description": "A heavy oak desk covered in dust. A folded note lies under a brass paperweight. The desk has a single drawer with a 4-digit combination lock.",
-      "cleared_description": "A heavy oak desk covered in dust, with a brass paperweight and a single drawer with a 4-digit combination lock.",
+      "description": "A heavy oak desk covered in dust. A folded note lies under a brass paperweight. The desk has a single drawer fitted with a brass combination lock.",
+      "cleared_description": "A heavy oak desk covered in dust, with a brass paperweight and a single drawer fitted with a brass combination lock.",
       "examine_reveals": ["note"]
     },
     {
