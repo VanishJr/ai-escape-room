@@ -21,7 +21,7 @@
       "id": "drawer",
       "name": "desk drawer",
       "aliases": ["drawer", "locked drawer", "desk drawer lock", "drawer lock", "desk lock", "brass lock", "combination lock", "padlock", "dials"],
-      "description": "The desk's only drawer is held shut by a brass combination lock with four dials.",
+      "description": "The desk's only drawer has a brass combination lock with four dials.",
       "open_description": "The drawer stands open; the brass lock hangs loose.",
       "lock": {
         "code": "7294",

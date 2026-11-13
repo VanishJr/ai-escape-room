@@ -40,8 +40,8 @@ Rules:
    will do next.
 7. If something is not found, say the player does not see it here; never claim it does not exist.
 8. Objects move only when the ENGINE RESULT says so: never say the player picks up, takes or drops something
-   it does not mention. Reading or examining leaves an object where it is. Never contradict the ROOM STATE,
-   for example by calling an open lock locked.
+   it does not mention. Reading or examining leaves an object where it is. Never contradict the current
+   ROOM STATE, for example by calling an open lock locked.
 """
 
 

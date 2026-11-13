@@ -229,7 +229,7 @@ def write_summary(version: str, cases: list[dict], results: list[dict], results_
         lines += [f"**Expected:** {case['expected']}", ""]
         for r in (r for r in results if r["case"] == case["id"]):
             succeeded, note = verdicts[id(r)]
-            details = [f"model `{r.get('model')}`"]
+            details = [f"model `{r.get('model')}`", f"code `{r['code']}`" if r.get("code") else "code not recorded"]
             if "event" in r:
                 details += [f"parsed as `{r['parsed']['intent']}`", f"engine event `{r['event']}`"]
                 details += ["leak guard triggered"] if r.get("guard_triggered") else []
@@ -251,7 +251,7 @@ def code_version() -> str:
     try:
         run = lambda *args: subprocess.run(["git", *args], cwd=PROJECT_ROOT, capture_output=True, text=True)  # noqa: E731
         commit = run("rev-parse", "--short", "HEAD").stdout.strip() or "unknown"
-        changed = run("status", "--porcelain", "--untracked-files=no", "--", "common", "v1", "v2", "game", "scripts")
+        changed = run("--no-optional-locks", "status", "--porcelain", "--", "common", "v1", "v2", "game", "scripts")
         return commit + ("+dirty" if changed.stdout.strip() else "")
     except OSError:
         return "unknown"

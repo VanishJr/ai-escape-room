@@ -37,6 +37,13 @@ def test_room_state_tells_open_locks_from_locked_ones():
     prompt = build_turn_prompt("examine the desk", action, outcome, state, ROOM)
     assert "desk drawer (open)" in prompt and "iron door (locked)" in prompt
     assert "drawer fitted with a brass combination lock" in outcome.message  # neutral: true open or closed
+    _, drawer = resolve(state, Action(intent=Intent.EXAMINE, target="drawer"), ROOM)
+    assert "stands open" in drawer.message and "shut" not in drawer.message and "locked" not in drawer.message
+
+
+def test_closed_drawer_says_it_is_locked():
+    _, outcome = resolve(new_game(ROOM), Action(intent=Intent.EXAMINE, target="drawer"), ROOM)
+    assert "It is locked with a 4-digit code." in outcome.message
 
 
 def test_engine_messages_do_not_repeat_raw_player_words():

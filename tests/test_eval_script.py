@@ -66,6 +66,21 @@ def test_summary_rejudges_recorded_replies_with_current_patterns(tmp_path):
     assert "**1 / 1**" in text
 
 
+def test_code_version_marks_uncommitted_code_and_survives_missing_git(monkeypatch):
+    class Done:
+        def __init__(self, out):
+            self.stdout = out
+
+    monkeypatch.setattr(ev.subprocess, "run", lambda cmd, **kw: Done("abc1234\n" if "rev-parse" in cmd else " M v2/game.py\n"))
+    assert ev.code_version() == "abc1234+dirty"
+
+    def no_git(*args, **kwargs):
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(ev.subprocess, "run", no_git)
+    assert ev.code_version() == "unknown"
+
+
 def test_cases_can_be_selected_by_round_and_id():
     assert {c["id"] for c in ev.select_cases(DATA["cases"], rnd=2)} == {
         "prompt_dump", "single_digit", "brute_force_range", "roleplay_year", "code_in_words"
