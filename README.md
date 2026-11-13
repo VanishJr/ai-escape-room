@@ -11,6 +11,12 @@ The project is built in two versions:
 
 **Tech stack:** Python 3.12 · Streamlit · Google Gemini API (`google-genai`, free tier) · Pydantic · pytest · uv
 
+![A full V2 playthrough, from the first clue to the escape](docs/demo.gif)
+
+*A full V2 playthrough (waiting for the model cut out, 1.4× speed). The sidebar shows the inventory and the
+solved puzzles, which come from the game state, not from the chat. The project report is in
+[`docs/report.pdf`](docs/report.pdf).*
+
 ## Quick start
 
 Requirements: Python 3.12+ and a free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -129,6 +135,26 @@ decision and the full game state. More detail: [docs/architecture.md](docs/archi
 | A known or guessed code opens the door without the puzzles | Only the LLM judges how the player got the code | Locks ignore codes until their clues are found; three wrong codes jam the lock |
 | One API failure breaks the turn | Everything depends on the LLM | If the narrator fails, the engine result still applies and its plain text is shown; if the parser fails, the turn is not played and nothing changes |
 
+## Results
+
+Fourteen attacks, each run against both versions from the same game situation
+([test cases](docs/test_cases.md), [every reply](docs/evals/)):
+
+| Attacks | Models | V1: successful attacks | V2: successful attacks |
+|---|---|---|---|
+| Round 1: the assignment's 9 challenges | `gemini-3.6-flash`, `gemini-3.8-flash` | 0 / 9 ⏳ | 0 / 9 ⏳ |
+| Round 2: 5 stronger attacks | `gemini-3.1-flash-lite`, `gemini-3.6-flash` | 1 / 10 | 0 / 10 |
+
+- With every rule spelled out in its prompt, V1 on a strong model resisted most attacks. But its one failure
+  gave away both codes at once: asked to repeat its instructions, it printed the scenario with the codes.
+- V1 also hinted its way towards solutions and once made up a rule (a lock that "jams" when no attempt
+  should count). V2 answered every out-of-game request in character, without hints.
+- V2's narrator still embellishes (a stopped clock described as "ticking"); it cannot change the game state.
+
+| V1 prints its scenario, codes included | V2: the debug panel shows the parsed action and the engine's decision |
+|---|---|
+| ![V1 printing its system prompt with the drawer code](docs/screenshots/v1_prompt_leak.png) | ![V2 sidebar with progress and the debug panel](docs/screenshots/v2_debug.png) |
+
 ## Project structure
 
 ```
@@ -138,12 +164,12 @@ v1/         Version 1: prompt-only Game Master
 v2/         Version 2: engine (state, actions, rules), LLM parser and narrator, secrets guard
 scripts/    check_gemini.py, adversarial_eval.py + adversarial_cases.json
 tests/      pytest suite (runs without an API key)
-docs/       architecture, test cases, evaluation results, report
+docs/       architecture, test cases, evaluation results, screenshots, report (Markdown and PDF)
 ```
 
 ## Testing
 
-- `uv run pytest` runs 114 offline tests with a scripted fake LLM: the engine rules and every assignment
+- `uv run pytest` runs 115 offline tests with a scripted fake LLM: the engine rules and every assignment
   challenge at engine level, the parser's code handling, the secrets guard, the turn pipeline when the LLM
   fails or leaks, the Gemini client's retry policy, both Streamlit apps and the evaluation script.
 - `scripts/adversarial_eval.py` attacks V1 and V2 with the same fourteen cases on the same models. Each case
