@@ -1,0 +1,248 @@
+/* The "shelter console" look, loaded by common/ui.py::apply_theme.
+   .streamlit/config.toml sets the colours and fonts of Streamlit's own widgets;
+   this file adds what a theme cannot express. The room's host name arrives as
+   the custom property --host-label, appended after this file. */
+
+:root {
+  --crt: #86f0a0;
+  --crt-bright: #b4ffc4;
+  --crt-dim: #3f9a57;
+  --crt-player: #e3ffe9;
+  --crt-line: #1f5a33;
+  --crt-ink: #06110a;
+  --crt-glow: 0 0 7px rgba(70, 255, 130, 0.45);
+  --metal-ink: #23271e;
+  --metal-text: #e8dfc0;
+  --metal-heading: #f1e7c4;
+  --metal-label: #9aa07f;
+  --lamp-on: #ffb53a;
+  --lamp-off: #3b2c12;
+  /* fallbacks for when the web fonts cannot be loaded */
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --display: "VT323", "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --stencil: "Stardos Stencil", Rockwell, Georgia, serif;
+}
+
+/* Selectors use Streamlit's data-testid attributes and st* class names as they
+   are in Streamlit 1.67. The main area is addressed by its class, .stMain: its
+   data-testid differs between pages with and without a chat input. */
+
+/* ---- the screen ---------------------------------------------------------- */
+[data-testid="stApp"] {
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at 60% 35%, #0f2616 0%, #050c07 85%);
+  background-attachment: fixed;
+  font-family: var(--mono);
+}
+[data-testid="stHeader"] {
+  background: linear-gradient(180deg, #050c07 35%, transparent);
+}
+.stMain {
+  font-family: var(--mono);
+  text-shadow: var(--crt-glow);
+}
+[data-testid="stMainBlockContainer"] {
+  padding-top: 3rem;
+}
+
+/* Streamlit sets its own font stack on text; repeat ours so that the fallback
+   stays monospaced when the web fonts cannot be loaded. */
+.stMain p,
+.stMain li,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] li {
+  font-family: var(--mono);
+}
+
+.console-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.1rem 0.7rem;
+  background: var(--crt);
+  color: var(--crt-ink);
+  font-family: var(--display);
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+  text-shadow: none;
+}
+
+.stMain h1 {
+  padding: 0.2rem 0 0;
+  color: var(--crt-bright);
+  font-family: var(--display);
+  font-size: 2.9rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.stMain [data-testid="stCaptionContainer"] {
+  color: var(--crt-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---- chat: no avatars, a label above the host, a prompt before the player --- */
+[data-testid="stChatMessage"] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0.15rem 0;
+  background: transparent;
+}
+[data-testid="stChatMessage"] > :has(> [data-testid^="stChatMessageAvatar"]),
+[data-testid="stChatMessage"] > [data-testid^="stChatMessageAvatar"],
+[data-testid="stChatMessage"] > img,
+[data-testid="stChatMessage"] > svg {
+  display: none;
+}
+[data-testid="stChatMessage"] [data-testid="stChatMessageContent"] {
+  width: 100%;
+  margin: 0; /* Streamlit centres a short message otherwise */
+}
+[data-testid="stChatMessage"]::before {
+  content: var(--host-label, "GAME MASTER");
+  color: var(--crt-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+  flex-direction: row;
+  align-items: baseline;
+  color: var(--crt-player);
+}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"])::before {
+  content: ">";
+  margin-right: 0.6rem;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) p {
+  color: var(--crt-player);
+}
+
+/* ---- the input line --------------------------------------------------------- */
+[data-testid="stBottom"],
+[data-testid="stBottomBlockContainer"] {
+  background: transparent;
+}
+[data-testid="stBottom"] > div {
+  border-top: 1px solid var(--crt-line);
+  background: #050c07;
+}
+[data-testid="stChatInput"] textarea {
+  caret-color: var(--crt);
+  font-family: var(--mono);
+  text-shadow: var(--crt-glow);
+}
+
+/* ---- messages from the app ----------------------------------------------------- */
+.stMain [data-testid="stAlert"] {
+  border: 1px solid var(--crt-line);
+  text-shadow: none;
+}
+
+/* ---- the metal side panel ----------------------------------------------------- */
+[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, #474d3c 0%, #3a4032 100%);
+  border-right: 3px solid var(--metal-ink);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  font-family: var(--mono);
+}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+  color: var(--metal-heading);
+  font-family: var(--stencil);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* compact, so that the progress plates stay on screen without scrolling */
+[data-testid="stSidebarHeader"] {
+  height: 2.25rem;
+  margin-bottom: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0;
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+  gap: 0.7rem;
+}
+[data-testid="stSidebar"] h3 {
+  padding: 0.3rem 0 0.9rem;
+}
+[data-testid="stSidebar"] li {
+  margin: 0 0 0 1.1rem;
+  padding: 0.05rem 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+[data-testid="stSidebar"] hr {
+  margin: 1.1rem 0 0.9rem;
+  border-color: var(--metal-ink);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+[data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
+  border: 2px solid var(--metal-ink);
+  border-radius: 4px;
+  background: #b23a25;
+  box-shadow: 0 3px 0 var(--metal-ink);
+  color: #fff1d8;
+  font-family: var(--stencil);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+[data-testid="stSidebar"] [data-testid="stBaseButton-primary"] p {
+  font-family: var(--stencil);
+  font-weight: 700;
+}
+[data-testid="stSidebar"] [data-testid="stBaseButton-primary"]:hover {
+  background: #c4452f;
+}
+[data-testid="stSidebar"] [data-testid="stBaseButton-primary"]:active {
+  box-shadow: 0 1px 0 var(--metal-ink);
+  transform: translateY(2px);
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] p {
+  font-size: 0.85rem;
+}
+
+/* progress plates: st.container(key="plate-...") in v2/app.py */
+[data-testid="stSidebar"] [class*="st-key-plate-"] {
+  gap: 0.1rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 3px;
+  background: var(--metal-ink);
+}
+[class*="st-key-plate-"] [data-testid="stCaptionContainer"] {
+  color: var(--metal-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+[class*="st-key-plate-"] p {
+  font-size: 0.86rem;
+}
+.st-key-plate-puzzles [data-testid="stMarkdownContainer"] p {
+  color: #ffd68a;
+}
+.lamps {
+  display: flex;
+  gap: 8px;
+  margin: 0.2rem 0 0.1rem;
+}
+.lamps i {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #111;
+  border-radius: 50%;
+  background: var(--lamp-off);
+}
+.lamps i.on {
+  background: var(--lamp-on);
+  box-shadow: 0 0 10px rgba(255, 181, 58, 0.85);
+}

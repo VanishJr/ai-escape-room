@@ -1,0 +1,36 @@
+# The "shelter console" look: a green phosphor screen next to an olive metal panel.
+# Colours and fonts of Streamlit's own widgets are set here; common/console.css
+# adds what a theme cannot express (scan lines, chat labels, panel plates).
+
+[client]
+toolbarMode = "minimal"  # no Deploy button or developer menu over the screen
+
+[theme]
+base = "dark"
+primaryColor = "#86f0a0"
+backgroundColor = "#07110b"
+secondaryBackgroundColor = "#0f2616"
+textColor = "#86f0a0"
+linkColor = "#b4ffc4"
+borderColor = "#1f5a33"
+codeBackgroundColor = "#0b1a10"
+greenTextColor = "#b4ffc4"
+greenBackgroundColor = "#143a20"
+redTextColor = "#ffb4a2"
+redBackgroundColor = "#3a1712"
+baseRadius = "0.15rem"
+# One "Name:URL" pair per option: Streamlit reads everything after the first colon
+# as the URL, so fallback fonts live in common/console.css instead.
+font = "IBM Plex Mono:https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+codeFont = "IBM Plex Mono:https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+headingFont = "VT323:https://fonts.googleapis.com/css2?family=VT323&display=swap"
+
+[theme.sidebar]
+backgroundColor = "#414737"
+secondaryBackgroundColor = "#23271e"
+textColor = "#e8dfc0"
+primaryColor = "#b23a25"
+linkColor = "#ffd68a"
+borderColor = "#23271e"
+codeBackgroundColor = "#23271e"
+headingFont = "Stardos Stencil:https://fonts.googleapis.com/css2?family=Stardos+Stencil:wght@700&display=swap"

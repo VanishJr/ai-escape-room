@@ -9,12 +9,21 @@ import streamlit as st
 
 from common.llm_client import GeminiClient, LLMError
 from common.room import active_room
-from common.ui import render_header, render_instructions, render_opening, render_turn
+from common.ui import (
+    apply_theme,
+    host_name,
+    lamps_html,
+    render_header,
+    render_instructions,
+    render_opening,
+    render_turn,
+)
 from v2.engine.state import GameState, new_game
 from v2.game import TurnResult, V2Game
 
-st.set_page_config(page_title="AI Escape Room · V2", page_icon="🗝️")
+st.set_page_config(page_title="AI Escape Room · V2", page_icon="📟")
 room = active_room()
+apply_theme(room)
 
 
 @st.cache_resource
@@ -44,14 +53,22 @@ state: GameState = session["state"]
 
 
 def render_progress() -> None:
+    """Three plates on the side panel. Everything here comes from the game state, not from the chat."""
     st.subheader("Your progress")
     items = [room.obj(i).name for i in state.inventory]
-    st.markdown(f"**Inventory:** {', '.join(items) if items else 'empty'}")
     solved = [p.name for p in room.scoring_puzzles if p.id in state.solved]
-    st.markdown(f"**Puzzles solved:** {len(solved)} / {len(room.scoring_puzzles)}")
-    for name in solved:
-        st.markdown(f"- ✅ {name}")
-    st.caption(f"Turn {state.turn}")
+    total = len(room.scoring_puzzles)
+    with st.container(key="plate-carrying"):  # the key becomes the CSS class st-key-plate-carrying
+        st.caption("Carrying")
+        st.markdown(", ".join(items) if items else "nothing")
+    with st.container(key="plate-puzzles"):
+        st.caption(f"Puzzles solved · {len(solved)} / {total}")
+        st.html(lamps_html(len(solved), total))
+        for name in solved:
+            st.markdown(f"✓ {name}")
+    with st.container(key="plate-turn"):
+        st.caption("Turn")
+        st.markdown(str(state.turn))
 
 
 def render_debug(turn: TurnResult | None) -> None:
@@ -95,7 +112,7 @@ player_text = typed or st.session_state.pop("retry_text", None)
 if player_text:
     render_turn("user", player_text)
     try:
-        with st.spinner("The Game Master is thinking..."):
+        with st.spinner(f"{host_name(room)} is thinking..."):
             result = V2Game(get_llm(), room).process_turn(state, player_text, session["narration"])
     except LLMError as exc:  # e.g. missing API key
         result = None
@@ -103,7 +120,7 @@ if player_text:
     else:
         error = result.error
     if error:
-        st.error(f"The Game Master is unavailable: {error}")
+        st.error(f"{host_name(room)} is unavailable: {error}")
         st.button("Retry", on_click=queue_retry, args=(player_text,))
         st.stop()
     st.session_state.v2 = {

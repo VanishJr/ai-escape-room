@@ -9,11 +9,12 @@ import streamlit as st
 
 from common.llm_client import ChatTurn, GeminiClient, LLMError
 from common.room import active_room
-from common.ui import render_header, render_instructions, render_opening, render_turn
+from common.ui import apply_theme, host_name, render_header, render_instructions, render_opening, render_turn
 from v1.game import V1Game
 
-st.set_page_config(page_title="AI Escape Room · V1", page_icon="🗝️")
+st.set_page_config(page_title="AI Escape Room · V1", page_icon="📟")
 room = active_room()
+apply_theme(room)
 
 
 @st.cache_resource
@@ -57,10 +58,10 @@ player_text = typed or st.session_state.pop("retry_text", None)
 if player_text:
     render_turn("user", player_text)
     try:
-        with st.spinner("The Game Master is thinking..."):
+        with st.spinner(f"{host_name(room)} is thinking..."):
             reply = get_game().process_turn(game_state["history"], player_text)
     except LLMError as exc:
-        st.error(f"The Game Master is unavailable: {exc}")
+        st.error(f"{host_name(room)} is unavailable: {exc}")
         st.button("Retry", on_click=queue_retry, args=(player_text,))
         st.stop()
     history = [*game_state["history"], ChatTurn("user", player_text), ChatTurn("model", reply.text)]
