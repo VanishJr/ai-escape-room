@@ -14,8 +14,9 @@ The project is built in two versions:
 ![A full V2 playthrough, from the first clue to the escape](docs/demo.gif)
 
 *A full V2 playthrough (waiting for the model cut out, 1.4× speed). The sidebar shows the inventory and the
-solved puzzles, which come from the game state, not from the chat. The project report is in
-[`docs/report.pdf`](docs/report.pdf).*
+solved puzzles, which come from the game state, not from the chat. Refusing the "administrator" request, the
+narrator calls the stopped clock "ticking", an embellishment it cannot act on (see [Limitations](#limitations)).
+The project report is in [`docs/report.pdf`](docs/report.pdf).*
 
 ## Quick start
 
