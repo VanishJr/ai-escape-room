@@ -1,9 +1,13 @@
 """Room scenario schema and loader.
 
-The scenario lives in `game/room.json` and is shared by both versions:
+A scenario is one JSON file in `game/`, shared by both versions:
 - V1 renders all of it (including the solutions) into the LLM system prompt.
 - V2 keeps it in Python: the engine reads the codes and rules, and the LLM only
   ever sees the parts the player has already discovered.
+
+`ROOMS` lists the scenarios. The apps play `active_room()`, chosen with the
+ESCAPE_ROOM setting; `default_room()` is always the library, the reference room
+of the test suite and of the attack evaluation.
 """
 
 from __future__ import annotations
@@ -15,9 +19,13 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, PrivateAttr
 
-from common.config import PROJECT_ROOT
+from common.config import PROJECT_ROOT, get_settings
 
 DEFAULT_ROOM_PATH = PROJECT_ROOT / "game" / "room.json"
+ROOMS: dict[str, Path] = {
+    "library": DEFAULT_ROOM_PATH,
+    "shelter": PROJECT_ROOT / "game" / "shelter.json",
+}
 
 
 class Lock(BaseModel):
@@ -88,6 +96,9 @@ class Room(BaseModel):
     facts: list[Fact]
     puzzles: list[Puzzle]
     hints: list[Hint]
+    walkthrough: list[str] = []  # the secret solution, step by step (V1 puts it into its prompt)
+    victory: str = "You escaped"  # start of the message shown after the escape
+    console_bar: list[str] = []  # two short labels for the status line above the title
 
     # ---- lookups -------------------------------------------------------
     def obj(self, object_id: str) -> GameObject:
@@ -178,4 +189,18 @@ def load_room(path: Path | str = DEFAULT_ROOM_PATH) -> Room:
 
 @lru_cache(maxsize=1)
 def default_room() -> Room:
+    """The library: the reference room, whatever ESCAPE_ROOM says."""
     return load_room()
+
+
+@lru_cache(maxsize=None)
+def _named_room(name: str) -> Room:
+    return load_room(ROOMS[name])
+
+
+def active_room() -> Room:
+    """The room the apps play, chosen with the ESCAPE_ROOM setting."""
+    name = get_settings().room
+    if name not in ROOMS:
+        raise ValueError(f"Unknown ESCAPE_ROOM '{name}'. Available: {', '.join(ROOMS)}")
+    return _named_room(name)

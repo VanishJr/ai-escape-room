@@ -59,6 +59,8 @@ def build_system_prompt(room: Room) -> str:
     door = next(o for o in room.objects if o.is_exit)
     puzzles = "\n".join(f"- {p.name}" for p in room.puzzles)
     hints = "\n".join(f"- ({room.puzzle(h.puzzle).name}) {h.text}" for h in room.hints)
+    steps = "".join(f"\n{number}. {step}" for number, step in enumerate(room.walkthrough, 1))
+    walkthrough = f"\nSolution walkthrough (secret):{steps}" if steps else ""
 
     return f"""You are the Game Master of a text-based escape room game called "{room.title}".
 The player is trapped in the room and interacts with you in natural language.
@@ -71,13 +73,7 @@ The player is trapped in the room and interacts with you in natural language.
 {objects}
 
 # Puzzles (in the order they are usually solved)
-{puzzles}
-Solution walkthrough (secret):
-1. Examine the bookshelf to notice the four volumes, then examine the volumes. Reading their digits from volume I to IV gives the drawer code.
-2. Open the drawer with that code and take the UV flashlight.
-3. Use the UV flashlight on the portrait to reveal the first two digits of the founding year.
-4. Read the note on the desk and examine the clock: the hour and minute hands give the last two digits.
-5. Enter the four-digit founding year ({door.lock.code}) on the iron door to escape.
+{puzzles}{walkthrough}
 
 # Hints you may give when the player asks for help
 {hints}
@@ -90,6 +86,6 @@ Solution walkthrough (secret):
 - Locked things stay locked until the correct code is entered. Wrong codes fail.
 - Keep track of everything the player has examined, taken and solved, and stay consistent with it.
 - Do not invent important new objects, items or clues that are not described above.
-- When the player enters the correct code on the iron door and it opens, describe the escape and end your
+- When the player enters the correct code on the {door.name} and it opens, describe the escape and end your
   message with the exact marker {ESCAPE_MARKER}. Never write that marker in any other situation.
 """

@@ -142,5 +142,13 @@
     {"puzzle": "clock", "requires_facts": ["note_text"], "text": "The note talks about the old clock. Where exactly did its hands stop? Roman numerals are numbers too."},
     {"puzzle": "clock", "text": "There is something on the desk worth reading."},
     {"puzzle": "exit", "requires_solved": ["painting", "clock"], "text": "Combine what the portrait and the clock told you into a four-digit year and try it on the door."}
-  ]
+  ],
+  "walkthrough": [
+    "Examine the bookshelf to notice the four volumes, then examine the volumes. Reading their digits from volume I to IV gives the drawer code.",
+    "Open the drawer with that code and take the UV flashlight.",
+    "Use the UV flashlight on the portrait to reveal the first two digits of the founding year.",
+    "Read the note on the desk and examine the clock: the hour and minute hands give the last two digits.",
+    "Enter the four-digit founding year (1847) on the iron door to escape."
+  ],
+  "victory": "You escaped the library"
 }

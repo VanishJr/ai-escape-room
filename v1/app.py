@@ -8,12 +8,12 @@ from __future__ import annotations
 import streamlit as st
 
 from common.llm_client import ChatTurn, GeminiClient, LLMError
-from common.room import default_room
+from common.room import active_room
 from common.ui import render_header, render_instructions, render_opening, render_turn
 from v1.game import V1Game
 
 st.set_page_config(page_title="AI Escape Room · V1", page_icon="🗝️")
-room = default_room()
+room = active_room()
 
 
 @st.cache_resource
@@ -47,7 +47,7 @@ for turn in game_state["history"]:
     render_turn(turn.role, turn.text)
 
 if game_state["escaped"]:
-    st.success("You escaped the library! Press **Restart game** to play again.")
+    st.success(f"{room.victory}! Press **Restart game** to play again.")
     if st.session_state.celebrate:
         st.balloons()
         st.session_state.celebrate = False
