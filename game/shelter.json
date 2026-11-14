@@ -1,0 +1,159 @@
+{
+  "title": "The Larkfield Shelter",
+  "intro": "Good morning, resident! This is MABEL, your shelter attendant. I am pleased to report that the all-clear sounded 9,125 days ago and that every other resident has gone up to the surface. I am sorry to say the blast door has locked itself again, and regulations do not allow me to open it for you. Thank you for your patience!",
+  "instructions": [
+    "Type what you want to do in plain English, for example: \"examine the supply shelf\", \"take the note\", \"put the vacuum tube in the radio\", \"enter 1234 on the door\".",
+    "Look around first: examining things reveals details you will need.",
+    "Locks take 4-digit codes. Too many wrong guesses in a row will jam a lock for a few turns.",
+    "Type \"inventory\" to see what you carry and \"hint\" if you are stuck."
+  ],
+  "description": "A low concrete service room under a single humming lamp. A supply shelf runs along one wall, and a steel footlocker is bolted to the floor beneath it. A duty desk stands in the middle of the room, and a radio set sits silent on a stand in the corner. A gauge panel is set into the far wall next to a faded civil defense poster, and the only way out is a heavy blast door with a keypad.",
+  "objects": [
+    {
+      "id": "shelf",
+      "name": "supply shelf",
+      "aliases": ["shelf", "shelves", "supply shelves", "supplies", "rack", "storage shelf", "ration tins", "tins", "blankets"],
+      "description": "Steel shelves stacked with ration tins and folded blankets, all under a grey coat of dust. On the lowest shelf stand four water canisters: the only things here that someone has wiped clean.",
+      "examine_reveals": ["canisters"]
+    },
+    {
+      "id": "canisters",
+      "name": "four water canisters",
+      "aliases": ["canisters", "canister", "water canisters", "water canister", "four canisters", "cans", "water cans", "jerrycans", "jerry cans", "water", "lids", "week one", "week two", "week three", "week four"],
+      "description": "Four olive-green water canisters, each stencilled with a week of the ration plan.",
+      "hidden": true,
+      "examine_facts": ["canister_digits"]
+    },
+    {
+      "id": "footlocker",
+      "name": "steel footlocker",
+      "aliases": ["footlocker", "foot locker", "locker", "trunk", "chest", "box", "lock", "combination lock", "push-button lock", "footlocker lock", "locker lock", "buttons"],
+      "description": "A dented steel footlocker bolted to the floor, fitted with a push-button combination lock.",
+      "open_description": "The footlocker stands open; its push-button lock has sprung free.",
+      "lock": {
+        "code": "3185",
+        "puzzle": "ration",
+        "requires_facts": ["canister_digits"],
+        "on_unlock_facts": ["footlocker_opened"],
+        "reveals": ["vacuum_tube"],
+        "max_attempts": 3,
+        "lockout_turns": 3
+      }
+    },
+    {
+      "id": "radio",
+      "name": "radio set",
+      "aliases": ["radio", "receiver", "wireless", "radio receiver", "socket", "empty socket", "tube socket", "speaker"],
+      "description": "A grey radio set on a metal stand. Its dial is dark. Behind the open back panel one tube socket is empty, its clips bent loose.",
+      "uses": [
+        {"item": "vacuum_tube", "facts": ["radio_message"], "solves": "radio"}
+      ]
+    },
+    {
+      "id": "desk",
+      "name": "duty desk",
+      "aliases": ["desk", "table", "steel desk", "logbook", "log book", "duty log", "log"],
+      "description": "A steel duty desk with a logbook worn soft at the corners. A folded note sticks out from between its last pages.",
+      "cleared_description": "A steel duty desk with a logbook worn soft at the corners. Its pages repeat the same entry, day after day: 'All quiet.'",
+      "examine_reveals": ["note"]
+    },
+    {
+      "id": "gauges",
+      "name": "gauge panel",
+      "aliases": ["gauges", "gauge", "dials", "needles", "air gauge", "water gauge", "pressure gauges", "meters", "panel", "instrument panel"],
+      "description": "Two round gauges under cracked glass, labelled AIR and WATER. The pumps behind them stopped long ago.",
+      "examine_facts": ["gauge_needles"]
+    },
+    {
+      "id": "poster",
+      "name": "civil defense poster",
+      "aliases": ["poster", "civil defence poster", "wall poster", "sign", "placard", "slogan"],
+      "description": "A faded poster of a smiling family in a tidy bunk room. The slogan reads: 'A CHEERFUL SHELTER IS A SAFE SHELTER.' There is nothing else of interest here."
+    },
+    {
+      "id": "note",
+      "name": "resident's note",
+      "aliases": ["note", "folded note", "paper", "letter", "slip", "torn page"],
+      "description": "A page torn from the logbook, folded twice and covered in hurried pencil.",
+      "hidden": true,
+      "takeable": true,
+      "examine_facts": ["note_text"]
+    },
+    {
+      "id": "vacuum_tube",
+      "name": "vacuum tube",
+      "aliases": ["tube", "radio tube", "glass tube", "spare tube", "vacuum-tube", "spare part"],
+      "description": "A glass vacuum tube the size of a thumb, its pins still bright. It looks like a spare part for a radio.",
+      "hidden": true,
+      "takeable": true
+    },
+    {
+      "id": "door",
+      "name": "blast door",
+      "aliases": ["door", "exit", "hatch", "keypad", "steel door", "door lock", "door keypad", "numeric keypad", "way out"],
+      "description": "A blast door of grey steel as thick as your arm, with a keypad that takes four digits. Stencilled above it: 'OPEN ONLY ON THE ALL-CLEAR.'",
+      "is_exit": true,
+      "lock": {
+        "code": "1962",
+        "puzzle": "exit",
+        "requires_solved": ["radio", "gauges"],
+        "on_unlock_facts": ["door_opened"],
+        "max_attempts": 3,
+        "lockout_turns": 3
+      }
+    }
+  ],
+  "facts": [
+    {
+      "id": "canister_digits",
+      "text": "Each canister is stencilled with a week of the ration plan, and someone has chalked a single digit on each lid. On the shelf they stand in this order: WEEK THREE (digit 8), WEEK ONE (digit 3), WEEK FOUR (digit 5), WEEK TWO (digit 1). A stencil on the shelf edge reads: 'DRINK IN ORDER. FIRST WEEK FIRST.'"
+    },
+    {
+      "id": "footlocker_opened",
+      "text": "The buttons click home and the lid of the footlocker springs open. Inside, wrapped in a grey cloth, lies a single vacuum tube."
+    },
+    {
+      "id": "radio_message",
+      "text": "With the vacuum tube held in the loose socket, the radio warms up with a low hum and a recorded voice crackles through: 'Attention, residents. The code for the blast door is the year this shelter was sealed: 19...' Static swallows the last two digits. When you let go, the tube slips back into your hand and the set falls silent."
+    },
+    {
+      "id": "note_text",
+      "text": "The note reads: 'To whoever is still down here: the code for the door is the year they sealed us in. I never could keep the last two digits in my head, so I read them off the gauges: air first, then water. They have not moved since the pumps stopped.'"
+    },
+    {
+      "id": "gauge_needles",
+      "text": "Both needles are frozen in place. The AIR needle rests exactly on 6 and the WATER needle rests exactly on 2."
+    },
+    {
+      "id": "door_opened",
+      "text": "The keypad chimes, the great bolts draw back one by one and the blast door swings outward. Daylight and the smell of grass pour into the room. You have left the Larkfield Shelter!"
+    }
+  ],
+  "puzzles": [
+    {"id": "ration", "name": "The water ration"},
+    {"id": "radio", "name": "The silent radio"},
+    {"id": "gauges", "name": "The frozen gauges", "solved_when_facts": ["note_text", "gauge_needles"]},
+    {"id": "exit", "name": "The blast door", "final": true}
+  ],
+  "hints": [
+    {"puzzle": "ration", "requires_facts": ["canister_digits"], "text": "The canisters are marked WEEK ONE to WEEK FOUR. Read their digits from the first week to the last, not in shelf order, and try that on the footlocker."},
+    {"puzzle": "ration", "text": "The supply shelf deserves a closer look, and so does anything on it that someone has handled recently."},
+    {"puzzle": "radio", "requires_solved": ["ration"], "text": "The radio is silent because one of its sockets is empty. Take what was in the footlocker and try it on the radio."},
+    {"puzzle": "gauges", "requires_facts": ["note_text"], "text": "The note talks about the gauges. Where exactly did the two needles stop? Air first, then water."},
+    {"puzzle": "gauges", "text": "There is something on the duty desk worth reading."},
+    {"puzzle": "exit", "requires_solved": ["radio", "gauges"], "text": "Combine what the radio and the gauges told you into a four-digit year and try it on the blast door."}
+  ],
+  "walkthrough": [
+    "Examine the supply shelf to notice the four water canisters, then examine the canisters. Reading their digits from WEEK ONE to WEEK FOUR gives the footlocker code.",
+    "Open the footlocker with that code and take the vacuum tube.",
+    "Use the vacuum tube on the radio set to hear the first two digits of the year the shelter was sealed.",
+    "Read the note on the duty desk and examine the gauge panel: the AIR needle and the WATER needle give the last two digits.",
+    "Enter the four-digit year (1962) on the blast door to escape."
+  ],
+  "victory": "You left the shelter",
+  "console_bar": ["LARKFIELD CIVIL SHELTER", "ATTENDANT CONSOLE"],
+  "host": {
+    "name": "MABEL",
+    "voice": "MABEL is the automated attendant of a civil defense shelter built in the atomic age. She speaks of herself as 'I', calls the player 'resident' and addresses them as 'you'. Her tone is the bright, courteous cheer of a 1950s public service announcement, with an unshakeable faith in regulations, and she reports what happens in the room as something she observes. When the resident makes claims or demands, she answers warmly and changes nothing. She never calls herself an AI, a program or a game."
+  }
+}

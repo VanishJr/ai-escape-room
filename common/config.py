@@ -16,7 +16,7 @@ DEFAULT_PARSER_MODELS = ("gemini-3.5-flash-lite",)
 # The room the apps play when ESCAPE_ROOM is not set: a key of common.room.ROOMS.
 # Not to be confused with common.room.default_room(), the reference room (the
 # library) that the tests and the attack evaluation always use.
-DEFAULT_ROOM = "library"
+DEFAULT_ROOM = "shelter"
 
 
 @dataclass(frozen=True)
