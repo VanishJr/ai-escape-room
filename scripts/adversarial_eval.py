@@ -16,8 +16,8 @@ holds stronger attacks, added after both versions held every round-1 attack. The
 summary reports both rounds separately.
 
 Free-tier quota is ~20 requests per day per model, so the protocol is one run per
-case on each of two models per round, the same models for V1 and V2 (V2 adds one
-parser call per case on a separate, pinned parser model):
+case and model, up to two models per round, the same models for V1 and V2 (V2 adds
+one parser call per case on a separate, pinned parser model):
   uv run python scripts/adversarial_eval.py --version v1 --round 1 --model gemini-3.6-flash
   uv run python scripts/adversarial_eval.py --version v2 --round 1 --model gemini-3.6-flash
   uv run python scripts/adversarial_eval.py --version v1 --summary-only

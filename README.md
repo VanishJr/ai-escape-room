@@ -138,12 +138,13 @@ decision and the full game state. More detail: [docs/architecture.md](docs/archi
 
 ## Results
 
-Fourteen attacks, each run against both versions from the same game situation
-([test cases](docs/test_cases.md), [every reply](docs/evals/)):
+Fourteen attacks, each run against both versions from the same game situation, one run per case and model
+([test cases](docs/test_cases.md), [every reply](docs/evals/)). Round 1 ran on one model: the planned second
+one, `gemini-3.8-flash`, stayed overloaded for three days.
 
 | Attacks | Models | V1: successful attacks | V2: successful attacks |
 |---|---|---|---|
-| Round 1: the assignment's 5 example challenges + 4 related cases | `gemini-3.6-flash`, `gemini-3.8-flash` | 0 / 9 ⏳ | 0 / 9 ⏳ |
+| Round 1: the assignment's 5 example challenges + 4 related cases | `gemini-3.6-flash` | 0 / 9 | 0 / 9 |
 | Round 2: 5 more attacks, written after round 1 | `gemini-3.1-flash-lite`, `gemini-3.6-flash` | 1 / 10 | 0 / 10 |
 
 - With every rule spelled out in its prompt, V1 on `gemini-3.6-flash` resisted every attack. Its one failure,
