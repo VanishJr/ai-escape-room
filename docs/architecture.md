@@ -1,7 +1,13 @@
 # Architecture
 
-Both versions share the scenario (`game/room.json`), the Gemini client (`common/llm_client.py`) and the
-Streamlit helpers (`common/ui.py`). They differ in **who owns the game**.
+Both versions share the scenario, the Gemini client (`common/llm_client.py`) and the Streamlit helpers
+(`common/ui.py`). They differ in **who owns the game**.
+
+A scenario is one JSON file in `game/`. The apps play `active_room()`, chosen with the `ESCAPE_ROOM`
+setting: `game/shelter.json` by default, `game/room.json` (the library) with `ESCAPE_ROOM=library`. The
+diagrams below say `room.json` for whichever file is active. `default_room()` is always the library: the
+tests and the attack evaluation use it as their reference room. A room may also name a host with a voice
+(`host` in the JSON); the voice is appended to the story prompts as style notes and cannot override the rules.
 
 ## Version 1: the LLM owns the game
 
@@ -18,7 +24,7 @@ flowchart LR
 
 | Component | Responsibility |
 |---|---|
-| `v1/prompts.py` | Renders the entire scenario into the system prompt: objects, clue texts, **codes and the solution walkthrough**, plus rules ("never reveal codes", "only use collected items"). |
+| `v1/prompts.py` | Renders the entire scenario into the system prompt: objects, clue texts, **codes and the solution walkthrough** (both from the room file), plus rules ("never reveal codes", "only use collected items"). |
 | `v1/game.py` | Sends the system prompt and the full chat history to Gemini each turn; detects the `[ESCAPED]` marker. |
 | `v1/app.py` | Chat UI, introduction, instructions, restart button; the chat history in `st.session_state` is the only game state. |
 

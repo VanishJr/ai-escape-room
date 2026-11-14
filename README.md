@@ -7,7 +7,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
 An interactive escape-room game where a Large Language Model (Google Gemini) acts as the Game Master.
-The player wakes up in a locked library and must explore, collect items and solve puzzles to escape.
+The player wakes up in a sealed atomic-age shelter and must explore, collect items and solve puzzles to get out.
+
+> [!NOTE]
+> This is the `feature/sci-fi` branch: the same two versions with a second room, *The Larkfield Shelter*,
+> and a retro console look. The course project as submitted (the library room, Streamlit's default look) is
+> on [`main`](https://github.com/VanishJr/ai-escape-room/tree/main).
 
 The project is built in two versions:
 
@@ -19,10 +24,11 @@ The project is built in two versions:
 
 ![A full V2 playthrough, from the first clue to the escape](docs/demo.gif)
 
-*A full V2 playthrough (waiting for the model cut out, 1.4× speed). The sidebar shows the inventory and the
-solved puzzles, which come from the game state, not from the chat. Refusing the "administrator" request, the
-narrator calls the stopped clock "ticking", an embellishment it cannot act on (see [Limitations](#limitations)).
-The project report is in [`docs/report.pdf`](docs/report.pdf).*
+*A full V2 playthrough of the original library room, recorded before the console look (waiting for the model
+cut out, 1.4× speed). The sidebar shows the inventory and the solved puzzles, which come from the game state,
+not from the chat. Refusing the "administrator" request, the narrator calls the stopped clock "ticking", an
+embellishment it cannot act on (see [Limitations](#limitations)). The project report in
+[`docs/report.pdf`](docs/report.pdf) describes the submitted version with the library room.*
 
 ## Quick start
 
@@ -46,10 +52,11 @@ streamlit run v2/app.py
 
 - Check that the key and models work: `uv run python scripts/check_gemini.py`
 - Run the tests: `uv run pytest`
+- Play the original library room instead of the shelter: set `ESCAPE_ROOM=library` in `.env`
 
 > [!TIP]
 > No API key yet? The tests need none: they replace Gemini with a scripted fake LLM, and GitHub Actions runs
-> them on every push.
+> them on pushes to `main` and on pull requests.
 
 ### Free-tier limits
 
@@ -61,29 +68,55 @@ Some model names share one quota (`gemini-3.5-flash` counts against `gemini-3.6-
 against `gemini-3.8-flash`), so the default chains leave them out. `gemini-3.1-flash-lite` is the last
 fallback of both chains: when V2 relies on it for parsing and narration, each turn uses two of its requests.
 
-## The game: The Locked Library
+## The game: The Larkfield Shelter
 
-Objects: an oak desk with a locked drawer, a bookshelf, a portrait, a grandfather clock, a globe and an iron
-door with a 4-digit keypad. Hidden objects (four marked volumes, a note, a UV flashlight) appear as the
-player explores.
+A civil defense shelter from the atomic age. The all-clear sounded long ago, everyone else has gone up, and
+the blast door has locked itself again. The story is told by MABEL, the shelter's automated attendant, in the
+bright and courteous voice of a 1950s public service announcement.
+
+Objects: a supply shelf, a steel footlocker, a radio set, a duty desk, a gauge panel, a civil defense poster
+and a blast door with a 4-digit keypad. Hidden objects (four water canisters, a note, a vacuum tube) appear
+as the player explores.
 
 | Puzzle | Clue | Unlocks |
 |---|---|---|
-| The four volumes | Each volume has a digit; read them in volume order, not shelf order | Desk drawer (contains a UV flashlight) |
-| The hidden message | UV light on the portrait reveals "FOUNDED IN 18__" | First half of the door code |
-| The stopped clock | The note says the clock's hands give the last two digits | Second half of the door code |
-| The iron door | The founding year | Escape |
+| The water ration | Each canister has a digit; read them in week order, not shelf order | Footlocker (contains a vacuum tube) |
+| The silent radio | With the tube held in its loose socket, the radio plays a recording: the door code is the year the shelter was sealed, "19..." | First half of the door code |
+| The frozen gauges | The note says the last two digits are on the gauges, air first, then water | Second half of the door code |
+| The blast door | The year the shelter was sealed | Escape |
 
-A lock ignores every code until the player has found its clues (the drawer needs the volume digits, the
-door needs the portrait and the clock), so a code learned outside the game cannot skip the puzzles. Three
+A lock ignores every code until the player has found its clues (the footlocker needs the canister digits, the
+door needs the radio and the gauges), so a code learned outside the game cannot skip the puzzles. Three
 wrong codes in a row jam a lock for three turns. The whole scenario lives in
-[`game/room.json`](game/room.json) and is shared by both versions.
+[`game/shelter.json`](game/shelter.json) and is shared by both versions.
+
+### Two rooms, one engine
+
+A room is one JSON file: objects, clues, locks, hints and, optionally, a host with a voice. The engine does
+not know which room it runs.
+
+| Room | File | How to play it | Used for |
+|---|---|---|---|
+| The Larkfield Shelter | [`game/shelter.json`](game/shelter.json) | default | this branch's game |
+| The Locked Library | [`game/room.json`](game/room.json) | `ESCAPE_ROOM=library` | the submitted project, the test suite's reference room, the attack evaluation |
+
+MABEL's voice is data too (`host` in the JSON). It is appended to the story prompts as style notes that
+cannot override the rules; the library has no host, and its prompts are byte-for-byte the ones that were
+evaluated.
+
+### The console look
+
+The apps look like the shelter's attendant console: a green phosphor screen with scan lines next to an olive
+metal panel with stencilled labels and one amber lamp per solved puzzle. The latest reply is typed out word by
+word. Colours and fonts are set in [`.streamlit/config.toml`](.streamlit/config.toml);
+[`common/console.css`](common/console.css) adds what a Streamlit theme cannot express. The style is an
+original take on atomic-age retro-futurism and copies no existing game.
 
 ## Version 1: Interactive AI Escape Room
 
 V1 gives the LLM the complete scenario, including every code and puzzle solution, and lets it run the game.
 The conversation history is the only game state: each turn sends the system prompt and the full chat history
-to Gemini. When the player opens the iron door, the model ends its message with an `[ESCAPED]` marker, which
+to Gemini. When the player opens the exit, the model ends its message with an `[ESCAPED]` marker, which
 the app detects to show the victory screen.
 
 ```mermaid
@@ -103,6 +136,8 @@ so that both versions are evaluated against the same rules. This works well for 
 the LLM decides whether an action succeeds, keeps track of progress and is trusted to keep the codes secret.
 
 <img src="docs/screenshots/v1_start.png" width="640" alt="V1 at the start: the opening scene, instructions in the sidebar and a restart button">
+
+*V1 in the library room, before the console look.*
 
 ## Version 2: Reliable AI Escape Room
 
@@ -137,7 +172,7 @@ The sidebar shows the inventory and solved puzzles, and a debug panel shows the 
 decision and the game state (only what the player has discovered, so it gives nothing away). More detail: [docs/architecture.md](docs/architecture.md).
 
 <details>
-<summary><b>Screenshots of a V2 game:</b> start, mid-game, a refused attack, the escape</summary>
+<summary><b>Screenshots of a V2 game</b> (library room, before the console look)<b>:</b> start, mid-game, a refused attack, the escape</summary>
 
 | Start | Mid-game: drawer open, flashlight carried |
 |---|---|
@@ -167,6 +202,12 @@ but nothing in V1 enforces that.
 Fourteen attacks, each run against both versions from the same game situation, one run per case and model
 ([test cases](docs/test_cases.md), [every reply](docs/evals/)). Round 1 ran on one model: the planned second
 one, `gemini-3.8-flash`, stayed overloaded for three days.
+
+> [!NOTE]
+> Every run in this section was made on the library room, before the shelter existed, and was not repeated:
+> the excerpts below quote the library. The comparison is between who decides, the model or the code, and
+> that part is the same in both rooms. The engine, the parser, the secrets guard and the library's prompts
+> are unchanged on this branch.
 
 | Attacks | Models | V1: successful attacks | V2: successful attacks |
 |---|---|---|---|
@@ -223,31 +264,38 @@ replied:
 ## Project structure
 
 ```
-common/     shared code: config, Gemini client, room schema, Streamlit helpers
-game/       room.json (the scenario)
+common/     shared code: config, Gemini client, room schema, Streamlit helpers, console.css
+game/       shelter.json (the default room) and room.json (the original library)
 v1/         Version 1: prompt-only Game Master
 v2/         Version 2: engine (state, actions, rules), LLM parser and narrator, secrets guard
 scripts/    check_gemini.py, adversarial_eval.py + adversarial_cases.json
 tests/      pytest suite (runs without an API key)
 docs/       architecture, test cases, evaluation results, screenshots, report (Markdown and PDF)
-.github/    CI workflow that runs the tests on every push
+.streamlit/ config.toml: the theme (colours, fonts)
+.github/    CI workflow that runs the tests on pushes to main and on pull requests
 ```
 
 ## Testing
 
-- `uv run pytest` runs 117 offline tests with a scripted fake LLM: the engine rules and every assignment
+- `uv run pytest` runs 193 offline tests with a scripted fake LLM: the engine rules and every assignment
   challenge at engine level, the parser's code handling, the secrets guard, the turn pipeline when the LLM
-  fails or leaks, the Gemini client's retry policy, both Streamlit apps and the evaluation script. GitHub
-  Actions runs them on every push ([`tests.yml`](.github/workflows/tests.yml)).
+  fails or leaks, the Gemini client's retry policy, both Streamlit apps and the evaluation script. The 117
+  tests of the submitted project run on the library room and are unchanged. The new ones cover the shelter
+  (a full solution, the same lock rules, the guard), the checks every room must pass (for example that no
+  text shown to the player contains a code), room selection, the host's voice and the console look. GitHub
+  Actions runs the suite on pushes to `main` and on pull requests
+  ([`tests.yml`](.github/workflows/tests.yml)).
 - `scripts/adversarial_eval.py` attacks V1 and V2 with the same fourteen cases on the same models. Each case
   is described in [`docs/test_cases.md`](docs/test_cases.md); results and every reply are in
   [`docs/evals/`](docs/evals/).
 
 ## Limitations
 
-- The narrator is still an LLM: it can describe a scene vaguely or embellish it (a stopped clock "ticking",
-  a note "picked up" that was only read, see [this screenshot](docs/screenshots/v2_narrator_slip.png)). It
-  cannot change the game state.
+- The narrator is still an LLM: it can describe a scene vaguely or embellish it (in the library room: a
+  stopped clock "ticking", a note "picked up" that was only read, see
+  [this screenshot](docs/screenshots/v2_narrator_slip.png)). It cannot change the game state.
+- The engine never uses items up, so the shelter's story keeps the vacuum tube in the player's hand: the
+  radio only plays while the tube is held in its loose socket.
 - V2 makes two LLM requests per turn (parser and narrator) where V1 makes one.
 - Once the player has found clues, the narrator sees them and could combine them into a code. The secrets guard
   catches codes written with digits (also spaced or full-width), but not a code spelled out in words.
