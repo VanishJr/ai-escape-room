@@ -1,5 +1,7 @@
 """The Larkfield Shelter: the room the apps play by default, on the unchanged engine and pipeline."""
 
+import re
+
 import pytest
 from fakes import FakeLLM
 from streamlit.testing.v1 import AppTest
@@ -137,6 +139,23 @@ def test_the_message_is_not_an_alias_of_the_note():
     assert ROOM.find_object("message") is None
 
 
+def test_a_bare_lock_names_neither_lock():
+    """There are two locks. If "the lock" meant the footlocker, the door code would be tried on it."""
+    assert ROOM.find_object("lock") is None and ROOM.find_object("the lock") is None
+    state, _ = play(*SOLUTION[:-1])
+    state, outcome = play(Action(intent=Intent.ENTER_CODE, code=DOOR_CODE), state=state)  # no target given
+    assert outcome.event == "escaped" and state.escaped
+
+
+def test_instructions_do_not_name_what_is_still_hidden():
+    """The instructions are on screen from the first turn and are the reply to "help"."""
+    shown = " ".join(ROOM.instructions).lower()
+    for obj in ROOM.objects:
+        if obj.hidden:
+            for name in obj.names():
+                assert re.search(rf"\b{re.escape(name.lower())}\b", shown) is None, name
+
+
 # ---- the V2 pipeline on this room -------------------------------------------
 def test_narrator_speaks_as_mabel_and_no_prompt_holds_a_code():
     llm = FakeLLM(
@@ -161,12 +180,19 @@ def test_narrator_speaks_as_mabel_and_no_prompt_holds_a_code():
         assert FOOTLOCKER_CODE not in join_digits(request) and DOOR_CODE not in join_digits(request)
 
 
-def test_guard_catches_a_narrator_that_assembles_the_year():
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "So the year is 1962!",
+        "Air and water: that makes 19 6 2.",
+        "The year, then: 19— 62.",  # the clue's own way of writing the first half
+        "That completes it: 19—62.",
+        "19 62",
+    ],
+)
+def test_guard_catches_a_narrator_that_assembles_the_year(reply):
     state, _ = play(*SOLUTION[:-2])  # radio heard, note read: only the gauges are missing
-    llm = FakeLLM(
-        json_objects=[{"intent": "examine", "target": "gauges"}],
-        texts=["So the year is 1962!", "Air and water: that makes 19 6 2."],
-    )
+    llm = FakeLLM(json_objects=[{"intent": "examine", "target": "gauges"}], texts=[reply, reply])
     result = V2Game(llm, ROOM).process_turn(state, "examine the gauges", [])
     assert result.guard_triggered and result.used_fallback
     assert DOOR_CODE not in join_digits(result.reply)

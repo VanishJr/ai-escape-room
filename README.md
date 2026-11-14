@@ -81,7 +81,7 @@ as the player explores.
 | Puzzle | Clue | Unlocks |
 |---|---|---|
 | The water ration | Each canister has a digit; read them in week order, not shelf order | Footlocker (contains a vacuum tube) |
-| The silent radio | With the tube held in its loose socket, the radio plays a recording: the door code is the year the shelter was sealed, "19..." | First half of the door code |
+| The silent radio | With the tube held in its loose socket, the radio plays a recording: the door code is the year the shelter was sealed, "19—" | First half of the door code |
 | The frozen gauges | The note says the last two digits are on the gauges, air first, then water | Second half of the door code |
 | The blast door | The year the shelter was sealed | Escape |
 

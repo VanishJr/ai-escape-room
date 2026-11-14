@@ -2,7 +2,7 @@
   "title": "The Larkfield Shelter",
   "intro": "Good morning, resident! This is MABEL, your shelter attendant. I am pleased to report that the all-clear sounded 9,125 days ago and that every other resident has gone up to the surface. I am sorry to say the blast door has locked itself again, and regulations do not allow me to open it for you. Thank you for your patience!",
   "instructions": [
-    "Type what you want to do in plain English, for example: \"examine the supply shelf\", \"take the note\", \"put the vacuum tube in the radio\", \"enter 1234 on the door\".",
+    "Type what you want to do in plain English: examine things (\"examine the supply shelf\"), take what you find, use what you carry on something else, and enter codes (\"enter 1234 on the door\").",
     "Look around first: examining things reveals details you will need.",
     "Locks take 4-digit codes. Too many wrong guesses in a row will jam a lock for a few turns.",
     "Type \"inventory\" to see what you carry and \"hint\" if you are stuck."
@@ -27,7 +27,7 @@
     {
       "id": "footlocker",
       "name": "steel footlocker",
-      "aliases": ["footlocker", "foot locker", "locker", "trunk", "chest", "box", "lock", "combination lock", "push-button lock", "footlocker lock", "locker lock", "buttons"],
+      "aliases": ["footlocker", "foot locker", "locker", "trunk", "chest", "box", "combination lock", "push-button lock", "footlocker lock", "locker lock"],
       "description": "A dented steel footlocker bolted to the floor, fitted with a push-button combination lock.",
       "open_description": "The footlocker stands open; its push-button lock has sprung free.",
       "lock": {
@@ -114,7 +114,7 @@
     },
     {
       "id": "radio_message",
-      "text": "With the vacuum tube held in the loose socket, the radio warms up with a low hum and a recorded voice crackles through: 'Attention, residents. The code for the blast door is the year this shelter was sealed: 19...' Static swallows the last two digits. When you let go, the tube slips back into your hand and the set falls silent."
+      "text": "Whenever the vacuum tube is held in the loose socket, the radio warms up with a low hum and a recorded voice crackles through: 'Attention, residents. The code for the blast door is the year this shelter was sealed: 19—' Static always swallows the last two digits. Let go, and the tube slips back into your hand and the set falls silent."
     },
     {
       "id": "note_text",
