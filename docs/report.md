@@ -36,8 +36,8 @@ state. Escape detection uses a marker: the model is told to end its message with
 opens, and the Streamlit app strips the marker and shows the victory screen. The app has an introduction,
 instructions and a restart button.
 
-For a cooperative player V1 works well: a full playthrough was narrated correctly, including the multi-step
-puzzle chain. Its weakness is structural. Every rule is a request to the model, the model holds every
+For a cooperative player V1 works well: in a live test game it narrated every step of the puzzle chain
+correctly. Its weakness is structural. Every rule is a request to the model, the model holds every
 secret, and progress exists only as text in the conversation.
 
 ## 4. Problems found in V1
@@ -69,9 +69,9 @@ V2 (`v2/`) separates the game into a deterministic core and two narrow LLM roles
 
 **Game state.** `GameState` is a Pydantic model holding discovered objects, inventory, open locks,
 solved puzzles, known clues, failed code attempts, lockouts, the turn counter, the escaped flag and an action
-log. It is shown as JSON in the app's debug panel.
+log. The app's debug panel shows it as JSON, without the log and without undiscovered objects.
 
-**Action validation.** A rules engine, `resolve(state, action) -> (new_state, outcome)`, is a pure function.
+**Action validation.** A rules engine, `resolve(state, action, room) -> (new_state, outcome)`, is a pure function.
 It checks that the target has been discovered, that a used item is in the inventory, that the lock's clues
 have been found (until then right and wrong codes get the same reply), that the lock is not jammed and that
 the code is correct. Three wrong codes in a row jam a lock for three turns. The engine is the only

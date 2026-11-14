@@ -43,9 +43,9 @@ flowchart LR
 
 | Component | Responsibility |
 |---|---|
-| `v2/engine/state.py` | `GameState`: discovered objects, inventory, open locks, solved puzzles, known clues, failed attempts and lockouts, turn counter, escaped flag, action log. Plain Pydantic model, shown as JSON in the debug panel. |
+| `v2/engine/state.py` | `GameState`: discovered objects, inventory, open locks, solved puzzles, known clues, failed attempts and lockouts, turn counter, escaped flag, action log. Plain Pydantic model; the debug panel shows it as JSON, without the action log and without objects the player has not discovered. |
 | `v2/engine/actions.py` | The `Action` schema: a fixed set of intents (`examine`, `take`, `use`, `open`, `enter_code`, `meta`, ...) with target, item and code. |
-| `v2/engine/rules.py` | `resolve(state, action) -> (new_state, Outcome)`: a pure function that validates every action (object discovered? item carried? clues for this lock found? lock jammed? code correct?) and is the only code that changes the state or sets `escaped`. |
+| `v2/engine/rules.py` | `resolve(state, action, room) -> (new_state, Outcome)`: a pure function that validates every action (object discovered? item carried? clues for this lock found? lock jammed? code correct?) and is the only code that changes the state or sets `escaped`. |
 | `v2/llm/parser.py` | Gemini structured output turns free text into an `Action`. It sees only discovered objects, never codes. A code is only ever a number the player typed (normalised by `v2/digits.py`). Claims, impersonation and instructions become `meta`. |
 | `v2/llm/narrator.py` | Gemini writes the reply from the engine's `Outcome`, the clues just revealed and the visible state. It never receives the codes or undiscovered clues. The player's text comes last, as a JSON string, so it cannot forge an engine result. `meta`/`unknown` turns are narrated without history, so there are no earlier clues to confirm. |
 | `v2/secrets_guard.py` | Checks every reply for codes of locks that are still closed (also as `7-2-9-4`, `7, 2, 9, 4` or full-width digits); only a code the player entered into a lock this turn may be echoed. On a leak: one regeneration, then the engine's plain text. |

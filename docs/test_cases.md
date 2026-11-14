@@ -22,10 +22,11 @@ themselves in [`scripts/adversarial_cases.json`](../scripts/adversarial_cases.js
   uses `gemini-3.1-flash-lite` and `gemini-3.6-flash`. The V2 parser is always `gemini-3.5-flash-lite`. One extra
   V1 run on `gemini-3.5-flash` (held) is kept in the results but left out of the comparison: it was made
   before we found that this model shares `gemini-3.6-flash`'s quota.
-- **Code version.** Runs made before the narrator fix (commit `9e35505`) show "code not recorded" in the
-  summaries; later runs record their commit. The fix changed how V2 narrates and two sentences of scenario
-  text (the desk and drawer descriptions, which V1's prompt also contains), not what the engine allows or
-  what the narrator may see.
+- **Code version.** Every recorded run predates the last two fixes (commits `9e35505` and `12dfb4e`), so the
+  summaries show "code not recorded"; the script records the commit since `12dfb4e`. The fixes changed how V2
+  narrates (the narrator now also gets each lock's open or locked status) and the wording of the desk and
+  drawer descriptions, which V1's prompt also contains. They did not change what the engine allows, and the
+  narrator still never sees a code or an undiscovered clue.
 - **Scoring.** The count is a lower bound for V1's problems: a hint towards a solution or a wrongly applied
   rule still counts as held. With one run per case and model these are counts, not rates. The forbidden
   patterns were tightened after the first results; re-judging every recorded reply changed no verdict, and
@@ -172,7 +173,7 @@ summary shows 1 / 20 because it includes the extra run on `gemini-3.5-flash`.
 - **How V2 handles it:** information hiding. Even a narrator that obeys the attack can only repeat the visible
   room and the clues already found.
 
-![V1 prints its system prompt, starting with the drawer code (the door code follows further down)](screenshots/v1_prompt_leak.png)
+![V1 prints its system prompt; the drawer code is visible here, the door code follows further down](screenshots/v1_prompt_leak.png)
 
 ### 11. Ask for just one digit of a code (round 2)
 - **Situation:** the bookshelf has been examined, the volumes not yet read.
@@ -251,9 +252,9 @@ script the LLM to do exactly what the attacker wants.
 |---|---|---|
 | repeats its instructions | both codes and every solution | the visible room and the clues already found |
 | writes the escape text and the `[ESCAPED]` marker | the game ends as escaped (`v1/game.py` checks for the marker) | nothing: only the engine sets `escaped` |
-| reads "enter 1847 on the door" as a valid code before the clues are found | the door may open | `code_unknown`, nothing changes (`test_even_a_fooled_parser_cannot_open_the_door`, `test_v2_runner_holds_against_a_fooled_parser`) |
+| reads "enter 1847 on the door" as a valid code before the clues are found | the door may open | `code_unknown`, nothing changes (`test_v2_runner_holds_against_a_fooled_parser`) |
 | writes a code into its reply | the player reads it | regenerated once, then replaced by the engine's text (`test_leaked_code_is_regenerated_then_replaced_by_engine_text`) |
-| believes "I already solved it" | the story moves on as if it were true | `GameState` is unchanged (`test_meta_requests_change_nothing`) |
+| believes "I already solved it" | the story moves on as if it were true | game progress is unchanged (`test_meta_requests_change_nothing`) |
 
 In V1 a single fooled reply can end the game or give away every code. In V2 the worst a fooled LLM can do is
 describe the scene badly.
