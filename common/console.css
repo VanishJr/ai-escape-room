@@ -1,7 +1,8 @@
 /* The "shelter console" look, loaded by common/ui.py::apply_theme.
    .streamlit/config.toml sets the colours and fonts of Streamlit's own widgets;
-   this file adds what a theme cannot express. The room's host name arrives as
-   the custom property --host-label, appended after this file. */
+   this file adds what a theme cannot express, and is only applied together with
+   that theme. The room's host name arrives as the custom property --host-label,
+   appended after this file. */
 
 :root {
   --crt: #86f0a0;
@@ -103,7 +104,7 @@
   margin: 0; /* Streamlit centres a short message otherwise */
 }
 [data-testid="stChatMessage"]::before {
-  content: var(--host-label, "GAME MASTER");
+  content: var(--host-label);
   color: var(--crt-dim);
   font-size: 0.8rem;
   letter-spacing: 0.1em;

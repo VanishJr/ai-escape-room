@@ -9,7 +9,16 @@ import streamlit as st
 
 from common.llm_client import ChatTurn, GeminiClient, LLMError
 from common.room import active_room
-from common.ui import apply_theme, host_name, render_header, render_instructions, render_opening, render_turn
+from common.ui import (
+    apply_theme,
+    host_name,
+    render_header,
+    render_history,
+    render_instructions,
+    render_opening,
+    render_turn,
+    type_next_reply,
+)
 from v1.game import V1Game
 
 st.set_page_config(page_title="AI Escape Room · V1", page_icon="📟")
@@ -44,9 +53,10 @@ with st.sidebar:
 
 render_header(room, "Version 1 — Interactive")
 render_opening(room)
-type_last = st.session_state.pop("type_last", False)  # set by the turn that has just been played
-for index, turn in enumerate(game_state["history"]):
-    render_turn(turn.role, turn.text, typed=type_last and index == len(game_state["history"]) - 1)
+# The input is created before the history: it sits at the bottom of the page either way, and
+# after the escape it is already disabled while the last reply is still being typed out.
+typed = st.chat_input("What do you do?", disabled=game_state["escaped"])
+render_history([(turn.role, turn.text) for turn in game_state["history"]])
 
 if game_state["escaped"]:
     st.success(f"{room.victory}! Press **Restart game** to play again.")
@@ -54,7 +64,6 @@ if game_state["escaped"]:
         st.balloons()
         st.session_state.celebrate = False
 
-typed = st.chat_input("What do you do?", disabled=game_state["escaped"])
 player_text = typed or st.session_state.pop("retry_text", None)
 if player_text:
     render_turn("user", player_text)
@@ -68,5 +77,5 @@ if player_text:
     history = [*game_state["history"], ChatTurn("user", player_text), ChatTurn("model", reply.text)]
     st.session_state.v1 = {"history": history, "escaped": reply.escaped}
     st.session_state.celebrate = reply.escaped
-    st.session_state.type_last = True
+    type_next_reply()
     st.rerun()

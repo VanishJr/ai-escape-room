@@ -14,9 +14,11 @@ from common.ui import (
     host_name,
     lamps_html,
     render_header,
+    render_history,
     render_instructions,
     render_opening,
     render_turn,
+    type_next_reply,
 )
 from v2.engine.state import GameState, new_game
 from v2.game import TurnResult, V2Game
@@ -56,14 +58,14 @@ def render_progress() -> None:
     """Three plates on the side panel. Everything here comes from the game state, not from the chat."""
     st.subheader("Your progress")
     items = [room.obj(i).name for i in state.inventory]
-    solved = [p.name for p in room.scoring_puzzles if p.id in state.solved]
-    total = len(room.scoring_puzzles)
+    puzzles = room.scoring_puzzles
+    solved = [p.name for p in puzzles if p.id in state.solved]
     with st.container(key="plate-carrying"):  # the key becomes the CSS class st-key-plate-carrying
         st.caption("Carrying")
         st.markdown(", ".join(items) if items else "nothing")
     with st.container(key="plate-puzzles"):
-        st.caption(f"Puzzles solved · {len(solved)} / {total}")
-        st.html(lamps_html(len(solved), total))
+        st.caption(f"Puzzles solved · {len(solved)} / {len(puzzles)}")
+        st.html(lamps_html([p.id in state.solved for p in puzzles]))
         for name in solved:
             st.markdown(f"✓ {name}")
     with st.container(key="plate-turn"):
@@ -98,9 +100,10 @@ with st.sidebar:
 
 render_header(room, "Version 2 — Reliable")
 render_opening(room)
-type_last = st.session_state.pop("type_last", False)  # set by the turn that has just been played
-for index, (role, text) in enumerate(session["chat"]):
-    render_turn(role, text, typed=type_last and index == len(session["chat"]) - 1)
+# The input is created before the history: it sits at the bottom of the page either way, and
+# after the escape it is already disabled while the last reply is still being typed out.
+typed = st.chat_input("What do you do?", disabled=state.escaped)
+render_history(session["chat"])
 
 if state.escaped:
     st.success(f"{room.victory} in {state.turn} turns! Press **Restart game** to play again.")
@@ -108,7 +111,6 @@ if state.escaped:
         st.balloons()
         st.session_state.celebrate = False
 
-typed = st.chat_input("What do you do?", disabled=state.escaped)
 player_text = typed or st.session_state.pop("retry_text", None)
 if player_text:
     render_turn("user", player_text)
@@ -131,5 +133,5 @@ if player_text:
         "last_turn": result,
     }
     st.session_state.celebrate = result.state.escaped
-    st.session_state.type_last = True
+    type_next_reply()
     st.rerun()

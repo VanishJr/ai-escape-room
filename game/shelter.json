@@ -2,7 +2,7 @@
   "title": "The Larkfield Shelter",
   "intro": "Good morning, resident! This is MABEL, your shelter attendant. I am pleased to report that the all-clear sounded 9,125 days ago and that every other resident has gone up to the surface. I am sorry to say the blast door has locked itself again, and regulations do not allow me to open it for you. Thank you for your patience!",
   "instructions": [
-    "Type what you want to do in plain English: examine things (\"examine the supply shelf\"), take what you find, use what you carry on something else, and enter codes (\"enter 1234 on the door\").",
+    "Type what you want to do in plain English: \"examine the supply shelf\", take what you find, use it on something else, \"enter 1234 on the door\".",
     "Look around first: examining things reveals details you will need.",
     "Locks take 4-digit codes. Too many wrong guesses in a row will jam a lock for a few turns.",
     "Type \"inventory\" to see what you carry and \"hint\" if you are stuck."

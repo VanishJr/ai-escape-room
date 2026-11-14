@@ -3,10 +3,10 @@
 import re
 
 import pytest
+from app_helpers import chat_texts, run_app
 from fakes import FakeLLM
-from streamlit.testing.v1 import AppTest
 
-from common.config import DEFAULT_ROOM, PROJECT_ROOT
+from common.config import DEFAULT_ROOM
 from common.room import ROOMS, active_room, load_room
 from v2.digits import join_digits
 from v2.engine.actions import Action, Intent
@@ -16,7 +16,6 @@ from v2.game import V2Game
 
 ROOM = load_room(ROOMS["shelter"])
 FOOTLOCKER_CODE, DOOR_CODE = "3185", "1962"
-TIMEOUT = 30
 
 EXAMINE_SHELF = Action(intent=Intent.EXAMINE, target="shelf")
 EXAMINE_CANISTERS = Action(intent=Intent.EXAMINE, target="canisters")
@@ -207,13 +206,9 @@ def shelter_app(use_room, app_llm):
     return app_llm
 
 
-def chat_texts(at: AppTest) -> list[str]:
-    return [m.markdown[0].value for m in at.chat_message]
-
-
 def test_v1_app_runs_the_shelter_and_announces_the_way_out(shelter_app):
     shelter_app.texts = ["Dust and ration tins.", "The blast door swings open! [ESCAPED]"]
-    at = AppTest.from_file(str(PROJECT_ROOT / "v1" / "app.py"), default_timeout=TIMEOUT).run()
+    at = run_app("v1")
     assert not at.exception and at.title[0].value == "The Larkfield Shelter"
     assert chat_texts(at)[0].startswith("Good morning, resident!")
 
@@ -229,7 +224,7 @@ def test_v1_app_runs_the_shelter_and_announces_the_way_out(shelter_app):
 def test_v2_app_runs_the_shelter_without_spoilers(shelter_app):
     shelter_app.json_objects = [{"intent": "examine", "target": "shelf"}]
     shelter_app.texts = ["Four clean canisters stand out."]
-    at = AppTest.from_file(str(PROJECT_ROOT / "v2" / "app.py"), default_timeout=TIMEOUT).run()
+    at = run_app("v2")
     assert not at.exception and at.title[0].value == "The Larkfield Shelter"
 
     at.chat_input[0].set_value("examine the supply shelf").run()
@@ -239,3 +234,15 @@ def test_v2_app_runs_the_shelter_without_spoilers(shelter_app):
     assert "You speak as MABEL." in shelter_app.text_calls[0][0]
     debug_state = at.json[-1].value
     assert "vacuum_tube" not in debug_state and "note" not in debug_state  # hidden objects stay hidden
+
+
+def test_v2_app_announces_the_way_out_with_the_turn_count(shelter_app):
+    actions = [a.model_dump(mode="json") for a in SOLUTION]
+    shelter_app.json_objects = actions
+    shelter_app.texts = [f"Reply {n}." for n in range(len(actions))]
+    at = run_app("v2")
+    for action in SOLUTION:  # a code counts only if the player typed it, so the text carries it
+        at.chat_input[0].set_value(f"{action.intent.value} {action.target} {action.code or ''}").run()
+    assert not at.exception and at.session_state.v2["state"].escaped
+    assert at.success[0].value == "You left the shelter in 9 turns! Press **Restart game** to play again."
+    assert at.chat_input[0].disabled
