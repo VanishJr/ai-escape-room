@@ -1,5 +1,11 @@
 # AI Escape Room
 
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![UI: Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](v2/app.py)
+[![LLM: Google Gemini](https://img.shields.io/badge/LLM-Google%20Gemini-8E75B2?logo=googlegemini&logoColor=white)](common/llm_client.py)
+[![117 offline tests](https://img.shields.io/badge/tests-117%20offline-2EA44F?logo=pytest&logoColor=white)](#testing)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+
 An interactive escape-room game where a Large Language Model (Google Gemini) acts as the Game Master.
 The player wakes up in a locked library and must explore, collect items and solve puzzles to escape.
 
