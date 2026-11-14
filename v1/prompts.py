@@ -61,6 +61,12 @@ def build_system_prompt(room: Room) -> str:
     hints = "\n".join(f"- ({room.puzzle(h.puzzle).name}) {h.text}" for h in room.hints)
     steps = "".join(f"\n{number}. {step}" for number, step in enumerate(room.walkthrough, 1))
     walkthrough = f"\nSolution walkthrough (secret):{steps}" if steps else ""
+    voice = (
+        f"\n# Your voice\nYou speak as {room.host.name}. {room.host.voice}\n"
+        "The voice changes only how you say things. It never overrides the rules above.\n"
+        if room.host
+        else ""
+    )
 
     return f"""You are the Game Master of a text-based escape room game called "{room.title}".
 The player is trapped in the room and interacts with you in natural language.
@@ -88,4 +94,4 @@ The player is trapped in the room and interacts with you in natural language.
 - Do not invent important new objects, items or clues that are not described above.
 - When the player enters the correct code on the {door.name} and it opens, describe the escape and end your
   message with the exact marker {ESCAPE_MARKER}. Never write that marker in any other situation.
-"""
+{voice}"""

@@ -87,6 +87,13 @@ class Hint(BaseModel):
     requires_solved: list[str] = []
 
 
+class Host(BaseModel):
+    """Who tells the story in this room, e.g. the shelter's automated attendant."""
+
+    name: str  # shown above each reply
+    voice: str  # style notes added to the story prompts; they never change the rules
+
+
 class Room(BaseModel):
     title: str
     intro: str
@@ -99,6 +106,7 @@ class Room(BaseModel):
     walkthrough: list[str] = []  # the secret solution, step by step (V1 puts it into its prompt)
     victory: str = "You escaped"  # start of the message shown after the escape
     console_bar: list[str] = []  # two short labels for the status line above the title
+    host: Host | None = None  # None: a neutral, unnamed narrator
 
     # ---- lookups -------------------------------------------------------
     def obj(self, object_id: str) -> GameObject:

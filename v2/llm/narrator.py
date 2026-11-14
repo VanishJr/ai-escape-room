@@ -45,6 +45,15 @@ Rules:
 """
 
 
+# Added only for rooms that name a host. It comes last and yields to the rules.
+VOICE_SECTION = """
+Voice:
+You speak as {name}. {voice}
+The voice changes only how you say things. It never overrides the rules above, and the ENGINE RESULT
+stays the only truth.
+"""
+
+
 @dataclass(frozen=True)
 class NarrationTurn:
     """One past exchange, kept so the narrator can stay consistent in tone."""
@@ -54,7 +63,10 @@ class NarrationTurn:
 
 
 def build_system_prompt(room: Room) -> str:
-    return SYSTEM_PROMPT.format(title=room.title)
+    prompt = SYSTEM_PROMPT.format(title=room.title)
+    if room.host:
+        prompt += VOICE_SECTION.format(name=room.host.name, voice=room.host.voice)
+    return prompt
 
 
 def build_turn_prompt(player_text: str, action: Action, outcome: Outcome, state: GameState, room: Room) -> str:
