@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import html
 import json
+import re
+import time
+from collections.abc import Iterator
 from pathlib import Path
 
 import streamlit as st
@@ -16,6 +19,7 @@ import streamlit as st
 from common.room import Room
 
 CONSOLE_CSS = Path(__file__).with_name("console.css")
+TYPING_DELAY = 0.03  # seconds between words when a reply is typed out
 
 
 def host_name(room: Room) -> str:
@@ -65,6 +69,21 @@ def render_opening(room: Room) -> None:
         st.markdown(f"{room.intro}\n\n{room.description}")
 
 
-def render_turn(role: str, text: str) -> None:
+def typing_chunks(text: str) -> list[str]:
+    """Words with the whitespace around them: joined again they give exactly `text`."""
+    return re.findall(r"\s*\S+\s*", text) or ([text] if text else [])
+
+
+def _typed_out(text: str) -> Iterator[str]:
+    for chunk in typing_chunks(text):
+        yield chunk
+        time.sleep(TYPING_DELAY)
+
+
+def render_turn(role: str, text: str, typed: bool = False) -> None:
+    """Show one chat message. `typed=True` prints the host's reply word by word, like terminal output."""
     with st.chat_message("user" if role == "user" else "assistant"):
-        st.markdown(text)
+        if typed and role != "user" and text.strip():
+            st.write_stream(_typed_out(text))
+        else:
+            st.markdown(text)

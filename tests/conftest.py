@@ -7,7 +7,9 @@ can change what a test runs on. A test that wants another room asks for `use_roo
 
 import pytest
 import streamlit as st
+from fakes import FakeLLM
 
+import common.llm_client
 from common.config import get_settings
 
 
@@ -29,4 +31,18 @@ def use_room(monkeypatch):
         st.cache_resource.clear()  # the V1 app caches its game together with the room
 
     yield select
+    st.cache_resource.clear()
+
+
+@pytest.fixture
+def app_llm(monkeypatch):
+    """Make `GeminiClient()` in the apps return one scripted FakeLLM.
+
+    The apps keep their client in `st.cache_resource`, so the cache is cleared
+    around the test: otherwise an app would talk to the fake of an earlier test.
+    """
+    fake = FakeLLM()
+    monkeypatch.setattr(common.llm_client, "GeminiClient", lambda *args, **kwargs: fake)
+    st.cache_resource.clear()
+    yield fake
     st.cache_resource.clear()

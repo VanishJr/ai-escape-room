@@ -3,10 +3,8 @@
 import json
 
 import pytest
-from fakes import FakeLLM
 from streamlit.testing.v1 import AppTest
 
-import common.llm_client
 from common.config import PROJECT_ROOT
 from common.llm_client import LLMError
 from common.room import DEFAULT_ROOM_PATH, ROOMS, Room, default_room, load_room
@@ -49,10 +47,8 @@ def test_lamps_show_one_light_per_puzzle():
 
 
 @pytest.fixture
-def fake(monkeypatch):
-    llm = FakeLLM()
-    monkeypatch.setattr(common.llm_client, "GeminiClient", lambda *args, **kwargs: llm)
-    return llm
+def fake(app_llm):
+    return app_llm
 
 
 def run_app(version: str) -> AppTest:

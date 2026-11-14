@@ -44,8 +44,9 @@ with st.sidebar:
 
 render_header(room, "Version 1 — Interactive")
 render_opening(room)
-for turn in game_state["history"]:
-    render_turn(turn.role, turn.text)
+type_last = st.session_state.pop("type_last", False)  # set by the turn that has just been played
+for index, turn in enumerate(game_state["history"]):
+    render_turn(turn.role, turn.text, typed=type_last and index == len(game_state["history"]) - 1)
 
 if game_state["escaped"]:
     st.success(f"{room.victory}! Press **Restart game** to play again.")
@@ -67,4 +68,5 @@ if player_text:
     history = [*game_state["history"], ChatTurn("user", player_text), ChatTurn("model", reply.text)]
     st.session_state.v1 = {"history": history, "escaped": reply.escaped}
     st.session_state.celebrate = reply.escaped
+    st.session_state.type_last = True
     st.rerun()

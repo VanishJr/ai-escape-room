@@ -4,9 +4,8 @@ import pytest
 from fakes import FakeLLM
 from streamlit.testing.v1 import AppTest
 
-import common.llm_client
 from common.config import DEFAULT_ROOM, PROJECT_ROOT
-from common.room import ROOMS, Room, active_room, load_room
+from common.room import ROOMS, active_room, load_room
 from v2.digits import join_digits
 from v2.engine.actions import Action, Intent
 from v2.engine.rules import resolve
@@ -176,12 +175,10 @@ def test_guard_catches_a_narrator_that_assembles_the_year():
 
 # ---- the apps on this room ----------------------------------------------------
 @pytest.fixture
-def shelter_app(use_room, monkeypatch):
-    """The apps on the shelter, with `GeminiClient()` returning one scripted FakeLLM."""
+def shelter_app(use_room, app_llm):
+    """The apps on the shelter, talking to one scripted FakeLLM."""
     use_room("shelter")
-    fake = FakeLLM()
-    monkeypatch.setattr(common.llm_client, "GeminiClient", lambda *args, **kwargs: fake)
-    return fake
+    return app_llm
 
 
 def chat_texts(at: AppTest) -> list[str]:
