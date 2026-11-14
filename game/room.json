@@ -148,7 +148,7 @@
     "Open the drawer with that code and take the UV flashlight.",
     "Use the UV flashlight on the portrait to reveal the first two digits of the founding year.",
     "Read the note on the desk and examine the clock: the hour and minute hands give the last two digits.",
-    "Enter the four-digit founding year (1847) on the iron door to escape."
+    "Enter the four-digit founding year ({exit_code}) on the iron door to escape."
   ],
   "victory": "You escaped the library"
 }

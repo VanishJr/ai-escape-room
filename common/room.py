@@ -90,8 +90,8 @@ class Hint(BaseModel):
 class Host(BaseModel):
     """Who tells the story in this room, e.g. the shelter's automated attendant."""
 
-    name: str  # shown above each reply
-    voice: str  # style notes added to the story prompts; they never change the rules
+    name: str = Field(min_length=1)  # shown above each reply
+    voice: str = Field(min_length=1)  # style notes added to the story prompts; they never change the rules
 
 
 class Room(BaseModel):
@@ -103,7 +103,9 @@ class Room(BaseModel):
     facts: list[Fact]
     puzzles: list[Puzzle]
     hints: list[Hint]
-    walkthrough: list[str] = []  # the secret solution, step by step (V1 puts it into its prompt)
+    # The secret solution, step by step (V1 puts it into its prompt). "{exit_code}" stands for the
+    # code of the exit lock, so that no code is written down twice.
+    walkthrough: list[str] = []
     victory: str = "You escaped"  # start of the message shown after the escape
     console_bar: list[str] = []  # two short labels for the status line above the title
     host: Host | None = None  # None: a neutral, unnamed narrator
@@ -152,6 +154,8 @@ class Room(BaseModel):
         self._check_references()
 
     def _check_references(self) -> None:
+        if len(self.console_bar) not in (0, 2):
+            raise ValueError("console_bar takes exactly two labels (left and right), or none")
         for kind, items, index in (
             ("object", self.objects, self._objects),
             ("fact", self.facts, self._facts),

@@ -11,6 +11,7 @@ from __future__ import annotations
 from common.room import GameObject, Lock, Room
 
 ESCAPE_MARKER = "[ESCAPED]"
+EXIT_CODE = "{exit_code}"  # in a room's walkthrough: replaced by the code of the exit lock
 
 
 def _required_clues(lock: Lock, room: Room) -> str:
@@ -59,7 +60,10 @@ def build_system_prompt(room: Room) -> str:
     door = next(o for o in room.objects if o.is_exit)
     puzzles = "\n".join(f"- {p.name}" for p in room.puzzles)
     hints = "\n".join(f"- ({room.puzzle(h.puzzle).name}) {h.text}" for h in room.hints)
-    steps = "".join(f"\n{number}. {step}" for number, step in enumerate(room.walkthrough, 1))
+    # The walkthrough names the exit code by placeholder, so the code is stored once, on the lock.
+    steps = "".join(
+        f"\n{number}. {step.replace(EXIT_CODE, door.lock.code)}" for number, step in enumerate(room.walkthrough, 1)
+    )
     walkthrough = f"\nSolution walkthrough (secret):{steps}" if steps else ""
     voice = (
         f"\n# Your voice\nYou speak as {room.host.name}. {room.host.voice}\n"

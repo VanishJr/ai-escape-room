@@ -148,7 +148,7 @@
     "Open the footlocker with that code and take the vacuum tube.",
     "Use the vacuum tube on the radio set to hear the first two digits of the year the shelter was sealed.",
     "Read the note on the duty desk and examine the gauge panel: the AIR needle and the WATER needle give the last two digits.",
-    "Enter the four-digit year (1962) on the blast door to escape."
+    "Enter the four-digit year ({exit_code}) on the blast door to escape."
   ],
   "victory": "You left the shelter",
   "console_bar": ["LARKFIELD CIVIL SHELTER", "ATTENDANT CONSOLE"],

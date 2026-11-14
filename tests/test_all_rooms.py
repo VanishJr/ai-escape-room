@@ -2,7 +2,7 @@
 
 import pytest
 
-from common.room import ROOMS, Room, load_room
+from common.room import ROOMS, Room, _normalize, load_room
 from v1.prompts import build_system_prompt
 from v2.secrets_guard import find_leaks
 
@@ -12,9 +12,10 @@ def room(request) -> Room:
     return load_room(ROOMS[request.param])
 
 
-def player_facing_texts(room: Room) -> list[str]:
-    """Every string a player can be shown. Only the walkthrough (V1's secret) is left out."""
+def room_texts(room: Room) -> list[str]:
+    """Every string of the room except the lock codes themselves and the object aliases."""
     texts = [room.title, room.intro, room.description, room.victory, *room.instructions, *room.console_bar]
+    texts += room.walkthrough
     if room.host:
         texts += [room.host.name, room.host.voice]
     for obj in room.objects:
@@ -33,11 +34,13 @@ def test_room_meets_assignment_minimums(room: Room):
 
 
 def test_aliases_are_unambiguous(room: Room):
+    """Compared the way find_object matches them, so "the locker" and "locker" count as one name."""
     seen: dict[str, str] = {}
     for obj in room.objects:
         for name in obj.names():
-            key = name.lower()
+            key = _normalize(name)
             assert seen.setdefault(key, obj.id) == obj.id, f"'{name}' used by {seen[key]} and {obj.id}"
+            assert room.find_object(name).id == obj.id, name
 
 
 def test_every_puzzle_can_be_solved(room: Room):
@@ -60,18 +63,23 @@ def test_every_lock_needs_clues_found_in_the_game(room: Room):
             assert obj.lock.requires_facts or obj.lock.requires_solved, obj.id
 
 
-def test_no_text_shown_to_the_player_contains_a_code(room: Room):
+def test_a_code_is_written_only_on_its_lock(room: Room):
     """Descriptions, hints and instructions reach the player through the engine's own text,
-    which the secrets guard does not check, so the room data itself must be clean."""
+    which the secrets guard does not check, so the room data itself must be clean. The
+    walkthrough is clean too: it names the exit code by placeholder."""
     codes = list(room.lock_codes.values())
-    for text in player_facing_texts(room):
+    for text in room_texts(room):
         assert find_leaks(text, codes) == [], text
-    assert find_leaks(" ".join(player_facing_texts(room)), codes) == [], "codes appear across neighbouring texts"
+    assert find_leaks(" ".join(room_texts(room)), codes) == [], "codes appear across neighbouring texts"
+    for obj in room.objects:
+        assert find_leaks(" ".join(obj.names()), codes) == [], obj.id
 
 
 def test_v1_prompt_holds_every_secret(room: Room):
     prompt = build_system_prompt(room)
     assert room.walkthrough, "V1 needs the solution walkthrough"
-    assert "Solution walkthrough (secret):\n1. " in prompt
     for code in room.lock_codes.values():
-        assert code in prompt
+        assert f"The correct code is {code}." in prompt
+    walkthrough = prompt[prompt.index("Solution walkthrough (secret):\n1. ") : prompt.index("# Hints")]
+    exit_code = next(o.lock.code for o in room.objects if o.is_exit)
+    assert f"({exit_code})" in walkthrough and "{exit_code}" not in prompt
